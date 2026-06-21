@@ -15,6 +15,16 @@ type Doctor = {
   estatus?: string | null;
 };
 
+type Especialidad = {
+  id_especialidad: number;
+  uk_nombre: string;
+};
+
+type EstadoEmpleado = {
+  id_estado_empleado: number;
+  ukTipo_estado: string;
+};
+
 const styles = {
   panel: {
     background: '#FFFFFF',
@@ -219,10 +229,36 @@ export default function DoctoresList() {
   const [search, setSearch] = useState('');
   const [especialidad, setEspecialidad] = useState('Todas');
   const [estado, setEstado] = useState('Todos');
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+  const [estadosEmpleado, setEstadosEmpleado] = useState<EstadoEmpleado[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [doctorToDisable, setDoctorToDisable] = useState<Doctor | null>(null);
   const debouncedSearch = useDebouncedValue(search, 300);
+
+  useEffect(() => {
+    async function loadCatalogos() {
+      const [especialidadesResponse, estadosResponse] = await Promise.all([
+        fetch('/api/especialidades'),
+        fetch('/api/estados-empleado'),
+      ]);
+
+      if (especialidadesResponse.ok) {
+        const data = await especialidadesResponse.json();
+        setEspecialidades(Array.isArray(data) ? data : data.data ?? []);
+      }
+
+      if (estadosResponse.ok) {
+        const data = await estadosResponse.json();
+        setEstadosEmpleado(Array.isArray(data) ? data : data.data ?? []);
+      }
+    }
+
+    void loadCatalogos().catch(() => {
+      setEspecialidades([]);
+      setEstadosEmpleado([]);
+    });
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -356,17 +392,18 @@ export default function DoctoresList() {
             ESPECIALIDAD
             <select style={styles.select} value={especialidad} onChange={(event) => setEspecialidad(event.target.value)}>
               <option>Todas</option>
-              <option>Cardiología</option>
-              <option>Neurología</option>
-              <option>Pediatría</option>
+              {especialidades.map((item) => (
+                <option key={item.id_especialidad}>{item.uk_nombre}</option>
+              ))}
             </select>
           </label>
           <label style={styles.filterLabel}>
             ESTADO
             <select style={styles.select} value={estado} onChange={(event) => setEstado(event.target.value)}>
               <option>Todos</option>
-              <option>Activo</option>
-              <option>Inactivo</option>
+              {estadosEmpleado.map((item) => (
+                <option key={item.id_estado_empleado}>{item.ukTipo_estado}</option>
+              ))}
             </select>
           </label>
           <button

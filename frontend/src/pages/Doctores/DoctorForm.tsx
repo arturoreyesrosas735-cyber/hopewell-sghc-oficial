@@ -4,12 +4,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import DoctorLayout, { useDoctorBreakpoints } from './DoctorLayout';
 
 type DoctorPayload = {
-  nombres: string;
-  apellido_paterno: string;
+  id_personal: number | '';
   uk_rfc_personal: string;
   uk_cedula_profesional: string;
-  fk_asentamiento_doctor: number;
-  fk_estado_empleado_doctor: number;
+  sede_nombre: string;
   especialidades: number[];
 };
 
@@ -18,15 +16,34 @@ type Especialidad = {
   uk_nombre: string;
 };
 
+type Sede = {
+  id_sede: number;
+  nombre_sede: string;
+};
+
+type PersonalDisponible = {
+  id_personal: number;
+  uk_numero_empleado: string;
+  nombres: string;
+  apellido_paterno: string;
+  apellido_materno?: string | null;
+  telefono?: string | null;
+  uk_correo_electronico: string;
+  uk_curp: string;
+  genero?: string | null;
+  nombre_sede?: string | null;
+  direccion?: string | null;
+  doctor_id?: number | null;
+  es_doctor?: boolean;
+};
+
 type ConflictField = 'uk_rfc_personal' | 'uk_cedula_profesional' | null;
 
 const emptyPayload: DoctorPayload = {
-  nombres: '',
-  apellido_paterno: '',
+  id_personal: '',
   uk_rfc_personal: '',
   uk_cedula_profesional: '',
-  fk_asentamiento_doctor: 1,
-  fk_estado_empleado_doctor: 1,
+  sede_nombre: 'Hospital Central Hopewell',
   especialidades: [],
 };
 
@@ -190,29 +207,54 @@ export default function DoctorForm() {
   const pkFkUsuario = params.pk_fk_usuario ?? params.id;
   const editing = Boolean(pkFkUsuario);
   const [formData, setFormData] = useState<DoctorPayload>(emptyPayload);
-  const [correoElectronico, setCorreoElectronico] = useState('');
-  const [telefonoContacto, setTelefonoContacto] = useState('');
-  const [hospitalAsignado, setHospitalAsignado] = useState('Hospital Central Hopewell');
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+  const [personalDisponible, setPersonalDisponible] = useState<PersonalDisponible[]>([]);
+  const [sedes, setSedes] = useState<Sede[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(editing);
   const [alert, setAlert] = useState('');
   const [conflictField, setConflictField] = useState<ConflictField>(null);
 
   useEffect(() => {
-    async function loadEspecialidades() {
-      const response = await fetch('/api/especialidades');
+    async function loadCatalogos() {
+      const [especialidadesResponse, sedesResponse, personalResponse] = await Promise.all([
+        fetch('/api/especialidades'),
+        fetch('/api/sedes'),
+        fetch('/api/personal-disponible'),
+      ]);
 
-      if (!response.ok || !(response.headers.get('content-type') ?? '').includes('application/json')) {
+      if (!especialidadesResponse.ok || !(especialidadesResponse.headers.get('content-type') ?? '').includes('application/json')) {
         setEspecialidades([]);
-        return;
+      } else {
+        const data = await especialidadesResponse.json();
+        setEspecialidades(Array.isArray(data) ? data : data.data ?? []);
       }
 
-      const data = await response.json();
-      setEspecialidades(Array.isArray(data) ? data : data.data ?? []);
+      if (!sedesResponse.ok || !(sedesResponse.headers.get('content-type') ?? '').includes('application/json')) {
+        setSedes([]);
+      } else {
+        const data = await sedesResponse.json();
+        const loadedSedes = Array.isArray(data) ? data : data.data ?? [];
+        setSedes(loadedSedes);
+        setFormData((current) => ({
+          ...current,
+          sede_nombre: current.sede_nombre || loadedSedes[0]?.nombre_sede || '',
+        }));
+      }
+
+      if (!personalResponse.ok || !(personalResponse.headers.get('content-type') ?? '').includes('application/json')) {
+        setPersonalDisponible([]);
+      } else {
+        const data = await personalResponse.json();
+        setPersonalDisponible(Array.isArray(data) ? data : data.data ?? []);
+      }
     }
 
-    void loadEspecialidades().catch(() => setEspecialidades([]));
+    void loadCatalogos().catch(() => {
+      setEspecialidades([]);
+      setPersonalDisponible([]);
+      setSedes([]);
+    });
   }, []);
 
   useEffect(() => {
@@ -232,20 +274,16 @@ export default function DoctorForm() {
 
         const data = await response.json();
         setFormData({
-          nombres: data.nombres ?? '',
-          apellido_paterno: data.apellido_paterno ?? '',
+          id_personal: data.id_personal ?? '',
           uk_rfc_personal: data.uk_rfc_personal ?? '',
           uk_cedula_profesional: data.uk_cedula_profesional ?? '',
-          fk_asentamiento_doctor: Number(data.fk_asentamiento_doctor ?? 1),
-          fk_estado_empleado_doctor: Number(data.fk_estado_empleado_doctor ?? 1),
+          sede_nombre: data.sede_nombre ?? 'Hospital Central Hopewell',
           especialidades: Array.isArray(data.especialidades)
             ? data.especialidades.map((item: number | Especialidad) =>
                 typeof item === 'number' ? item : item.id_especialidad,
               )
             : [],
         });
-        setCorreoElectronico(data.correo_electronico ?? '');
-        setTelefonoContacto(data.telefono ?? '');
       } catch {
         setAlert('No fue posible cargar el doctor.');
       } finally {
@@ -258,6 +296,8 @@ export default function DoctorForm() {
 
   const title = useMemo(() => (editing ? 'Editar Doctor' : 'Registrar Doctor'), [editing]);
   const firstEspecialidad = formData.especialidades[0] ? String(formData.especialidades[0]) : '';
+  const selectedPersonal = personalDisponible.find((item) => item.id_personal === Number(formData.id_personal));
+  const selectedPersonalAlreadyDoctor = Boolean(selectedPersonal?.es_doctor) && !editing;
 
   function updateField<Key extends keyof DoctorPayload>(key: Key, value: DoctorPayload[Key]) {
     setFormData((current) => ({ ...current, [key]: value }));
@@ -268,6 +308,17 @@ export default function DoctorForm() {
   function updateEspecialidad(event: ChangeEvent<HTMLSelectElement>) {
     const value = Number(event.target.value);
     updateField('especialidades', value ? [value] : []);
+  }
+
+  function updatePersonal(event: ChangeEvent<HTMLSelectElement>) {
+    const value = Number(event.target.value);
+    const personal = personalDisponible.find((item) => item.id_personal === value);
+
+    updateField('id_personal', value || '');
+
+    if (personal?.nombre_sede) {
+      updateField('sede_nombre', personal.nombre_sede);
+    }
   }
 
   function conflictStyle(field: ConflictField) {
@@ -295,7 +346,7 @@ export default function DoctorForm() {
       if (response.status === 409) {
         const data = await response.json().catch(() => ({}));
         setConflictField(data.field === 'uk_rfc_personal' ? 'uk_rfc_personal' : 'uk_cedula_profesional');
-        setAlert('Este registro ya existe.');
+        setAlert(data.message ?? 'Este registro ya existe.');
         return;
       }
 
@@ -331,42 +382,73 @@ export default function DoctorForm() {
               </div>
               <div style={{ ...styles.grid, gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, minmax(0, 1fr))' }}>
                 <label style={styles.label}>
-                  NOMBRE(S)
-                  <input
+                  NÚMERO DE EMPLEADO
+                  <select
                     required
-                    placeholder="Ej. Ricardo"
-                    style={styles.input}
-                    value={formData.nombres}
-                    onChange={(event) => updateField('nombres', event.target.value)}
-                  />
+                    disabled={editing}
+                    style={styles.select}
+                    value={formData.id_personal}
+                    onChange={updatePersonal}
+                  >
+                    <option value="">
+                      {personalDisponible.length > 0 ? 'Selecciona un empleado' : 'No hay empleados disponibles'}
+                    </option>
+                    {personalDisponible.map((personal) => (
+                      <option key={personal.id_personal} value={personal.id_personal}>
+                        {personal.uk_numero_empleado}
+                        {personal.es_doctor ? ' - ya es doctor' : ''}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label style={styles.label}>
-                  APELLIDOS
+                  NOMBRE COMPLETO
                   <input
-                    required
-                    placeholder="Ej. Martínez"
+                    readOnly
+                    placeholder="Selecciona un empleado"
                     style={styles.input}
-                    value={formData.apellido_paterno}
-                    onChange={(event) => updateField('apellido_paterno', event.target.value)}
+                    value={
+                      selectedPersonal
+                        ? `${selectedPersonal.nombres} ${selectedPersonal.apellido_paterno} ${selectedPersonal.apellido_materno ?? ''}`.trim()
+                        : ''
+                    }
                   />
                 </label>
                 <label style={styles.label}>
                   CORREO ELECTRÓNICO
                   <input
-                    placeholder="ricardo.mtz@hopewell.com"
+                    readOnly
+                    placeholder="correo registrado"
                     style={styles.input}
                     type="email"
-                    value={correoElectronico}
-                    onChange={(event) => setCorreoElectronico(event.target.value)}
+                    value={selectedPersonal?.uk_correo_electronico ?? ''}
                   />
                 </label>
                 <label style={styles.label}>
                   TELÉFONO DE CONTACTO
                   <input
-                    placeholder="+52 55 0000 0000"
+                    readOnly
+                    placeholder="teléfono registrado"
                     style={styles.input}
-                    value={telefonoContacto}
-                    onChange={(event) => setTelefonoContacto(event.target.value)}
+                    value={selectedPersonal?.telefono ?? ''}
+                  />
+                </label>
+                <label style={styles.label}>
+                  GÉNERO
+                  <input
+                    readOnly
+                    placeholder="género registrado"
+                    style={styles.input}
+                    value={selectedPersonal?.genero ?? ''}
+                  />
+                </label>
+                <label style={styles.label}>
+                  DIRECCIÓN
+                  <input
+                    readOnly
+                    placeholder="dirección registrada"
+                    style={styles.input}
+                    value={selectedPersonal?.direccion ?? ''}
                   />
                 </label>
               </div>
@@ -432,19 +514,20 @@ export default function DoctorForm() {
                         {especialidad.uk_nombre}
                       </option>
                     ))}
-                    {especialidades.length === 0 ? <option value="1">Cardiología</option> : null}
+                    {especialidades.length === 0 ? <option value="" disabled>No hay especialidades registradas</option> : null}
                   </select>
                 </label>
                 <label style={styles.label}>
                   HOSPITAL ASIGNADO
                   <select
                     style={styles.select}
-                    value={hospitalAsignado}
-                    onChange={(event) => setHospitalAsignado(event.target.value)}
+                    value={formData.sede_nombre}
+                    onChange={(event) => updateField('sede_nombre', event.target.value)}
                   >
-                    <option>Hospital Central Hopewell</option>
-                    <option>Clínica Hopewell Norte</option>
-                    <option>Clínica Hopewell Sur</option>
+                    {sedes.map((sede) => (
+                      <option key={sede.id_sede}>{sede.nombre_sede}</option>
+                    ))}
+                    {sedes.length === 0 ? <option value="" disabled>No hay sedes registradas</option> : null}
                   </select>
                 </label>
               </div>
@@ -456,15 +539,18 @@ export default function DoctorForm() {
             </section>
 
             {alert ? <div style={styles.alert}>{alert}</div> : null}
+            {selectedPersonalAlreadyDoctor ? (
+              <div style={styles.alert}>Este empleado ya tiene un perfil de doctor asignado.</div>
+            ) : null}
 
             <div style={{ ...styles.actions, flexDirection: isMobile ? 'column' : 'row' }}>
               <button
-                disabled={saving}
+                disabled={saving || selectedPersonalAlreadyDoctor}
                 style={{
                   ...styles.button,
                   background: saving ? '#36B37E' : '#00875A',
                   color: '#FFFFFF',
-                  cursor: saving ? 'not-allowed' : 'pointer',
+                  cursor: saving || selectedPersonalAlreadyDoctor ? 'not-allowed' : 'pointer',
                   width: isMobile ? '100%' : '176px',
                 }}
                 type="submit"
