@@ -5,11 +5,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 type DoctorLayoutProps = {
   children: ReactNode;
   breadcrumbCurrent?: string;
+  panelTitle?: string;
+  sectionLabel?: string;
 };
 
 const navItems = [
   ['⌘', 'USUARIOS Y ACCESO', '/usuarios'],
   ['⚕', 'DOCTORES', '/doctores'],
+  ['✚', 'ESPECIALIDADES', '/especialidades'],
   ['▦', 'HOSPITALES Y CLÍNICAS', '/hospitales-clinicas'],
   ['▥', 'CONSULTORIOS', '/consultorios'],
   ['☷', 'REPORTES', '/reportes'],
@@ -190,7 +193,12 @@ const styles = {
   },
 };
 
-export default function DoctorLayout({ children, breadcrumbCurrent }: DoctorLayoutProps) {
+export default function DoctorLayout({
+  children,
+  breadcrumbCurrent,
+  panelTitle = 'PANEL DE DOCTORES',
+  sectionLabel = 'DOCTORES',
+}: DoctorLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(true);
@@ -261,7 +269,7 @@ export default function DoctorLayout({ children, breadcrumbCurrent }: DoctorLayo
           }}
         >
           {navItems.map(([icon, label, path]) => {
-            const selected = activePath === path || (path === '/doctores' && activePath.startsWith('/doctores'));
+            const selected = activePath === path || (path === '/doctores' && activePath.startsWith('/doctores')) || (path === '/especialidades' && activePath.startsWith('/especialidades'));
             const highlighted = selected || hoveredPath === path;
 
             return (
@@ -332,7 +340,7 @@ export default function DoctorLayout({ children, breadcrumbCurrent }: DoctorLayo
             }}
           >
             <div>
-              <h1 style={{ ...styles.pageTitle, fontSize: isMobile ? '16px' : '18px' }}>PANEL DE DOCTORES</h1>
+              <h1 style={{ ...styles.pageTitle, fontSize: isMobile ? '16px' : '18px' }}>{panelTitle}</h1>
               <p style={styles.eyebrow}>LUNES 13 DE ABRIL, 2026</p>
             </div>
             <div style={{ ...styles.topActions, gap: isMobile ? '10px' : '18px', paddingRight: isMobile ? 0 : '20px' }}>
@@ -356,7 +364,7 @@ export default function DoctorLayout({ children, breadcrumbCurrent }: DoctorLayo
           <span>⌂</span>
           <span>INICIO</span>
           <span>&gt;</span>
-          <span style={{ color: breadcrumbCurrent ? '#A3A3A3' : '#74D66B' }}>DOCTORES</span>
+          <span style={{ color: breadcrumbCurrent ? '#A3A3A3' : '#74D66B' }}>{sectionLabel}</span>
           {breadcrumbCurrent ? (
             <>
               <span>&gt;</span>

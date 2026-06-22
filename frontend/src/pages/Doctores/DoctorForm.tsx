@@ -38,6 +38,18 @@ type PersonalDisponible = {
 };
 
 type ConflictField = 'uk_rfc_personal' | 'uk_cedula_profesional' | null;
+type DoctorDocumentField = 'cedula_documento' | 'rfc_documento';
+type DoctorDocument = {
+  id_documento_doctor: number;
+  tipo_documento: string;
+  nombre_documento: string;
+  extension_archivo: string;
+  tamano_archivo: string | number;
+  url: string;
+};
+
+const cedulaRegex = /^[0-9]{8}$/;
+const rfcRegex = /^[A-ZÑ&]{4}[0-9]{6}[A-Z0-9]{3}$/i;
 
 const emptyPayload: DoctorPayload = {
   id_personal: '',
@@ -146,6 +158,27 @@ const styles = {
     textAlign: 'center' as const,
     width: '100%',
   },
+  uploadActions: {
+    alignItems: 'center',
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '8px',
+    justifyContent: 'center',
+    marginTop: '6px',
+  },
+  miniButton: {
+    alignItems: 'center',
+    border: 0,
+    borderRadius: '5px',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    fontSize: '10px',
+    fontWeight: 800,
+    height: '26px',
+    justifyContent: 'center',
+    padding: '0 10px',
+    textDecoration: 'none',
+  },
   uploadGrid: {
     boxSizing: 'border-box' as const,
     display: 'grid',
@@ -214,6 +247,14 @@ export default function DoctorForm() {
   const [loading, setLoading] = useState(editing);
   const [alert, setAlert] = useState('');
   const [conflictField, setConflictField] = useState<ConflictField>(null);
+  const [doctorDocuments, setDoctorDocuments] = useState<Record<DoctorDocumentField, File | null>>({
+    cedula_documento: null,
+    rfc_documento: null,
+  });
+  const [currentDocuments, setCurrentDocuments] = useState<Record<DoctorDocumentField, DoctorDocument | null>>({
+    cedula_documento: null,
+    rfc_documento: null,
+  });
 
   useEffect(() => {
     async function loadCatalogos() {
@@ -284,6 +325,7 @@ export default function DoctorForm() {
               )
             : [],
         });
+        setCurrentDocuments(mapCurrentDocuments(data.documentos ?? []));
       } catch {
         setAlert('No fue posible cargar el doctor.');
       } finally {
@@ -325,6 +367,118 @@ export default function DoctorForm() {
     return conflictField === field ? { borderColor: '#DE350B' } : {};
   }
 
+  function mapCurrentDocuments(documents: DoctorDocument[]) {
+    return documents.reduce<Record<DoctorDocumentField, DoctorDocument | null>>(
+      (mappedDocuments, document) => {
+        if (document.tipo_documento === 'Cedula profesional') {
+          mappedDocuments.cedula_documento = document;
+        }
+
+        if (document.tipo_documento === 'RFC') {
+          mappedDocuments.rfc_documento = document;
+        }
+
+        return mappedDocuments;
+      },
+      {
+        cedula_documento: null,
+        rfc_documento: null,
+      },
+    );
+  }
+
+  function updateDocument(field: DoctorDocumentField, event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setAlert('');
+
+    if (!file) {
+      setDoctorDocuments((current) => ({ ...current, [field]: null }));
+      return;
+    }
+
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const isValidSize = file.size <= 5 * 1024 * 1024;
+
+    if (!isPdf || !isValidSize) {
+      setAlert('El documento debe ser PDF y pesar máximo 5MB.');
+      event.target.value = '';
+      setDoctorDocuments((current) => ({ ...current, [field]: null }));
+      return;
+    }
+
+    setDoctorDocuments((current) => ({ ...current, [field]: file }));
+  }
+
+  function clearSelectedDocument(field: DoctorDocumentField) {
+    setDoctorDocuments((current) => ({ ...current, [field]: null }));
+    setAlert('');
+  }
+
+  async function deleteCurrentDocument(field: DoctorDocumentField) {
+    if (!editing || !pkFkUsuario || saving) {
+      return;
+    }
+
+    setSaving(true);
+    setAlert('');
+
+    try {
+      const response = await fetch(`/api/doctores/${pkFkUsuario}/documentos/${field}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('No fue posible eliminar el documento.');
+      }
+
+      setCurrentDocuments((current) => ({ ...current, [field]: null }));
+      setDoctorDocuments((current) => ({ ...current, [field]: null }));
+    } catch {
+      setAlert('No fue posible eliminar el documento.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function documentHelperText(field: DoctorDocumentField) {
+    const selectedDocument = doctorDocuments[field];
+    const currentDocument = currentDocuments[field];
+
+    if (selectedDocument) {
+      return selectedDocument.name;
+    }
+
+    if (currentDocument) {
+      return `Actual: ${currentDocument.nombre_documento}`;
+    }
+
+    return 'Formatos permitidos: PDF (Máx. 5MB)';
+  }
+
+  function buildRequestBody() {
+    const body = new FormData();
+
+    if (formData.id_personal !== '') {
+      body.append('id_personal', String(formData.id_personal));
+    }
+
+    body.append('uk_rfc_personal', formData.uk_rfc_personal);
+    body.append('uk_cedula_profesional', formData.uk_cedula_profesional);
+    body.append('sede_nombre', formData.sede_nombre);
+
+    formData.especialidades.forEach((especialidadId) => {
+      body.append('especialidades[]', String(especialidadId));
+    });
+
+    Object.entries(doctorDocuments).forEach(([field, file]) => {
+      if (file) {
+        body.append(field, file);
+      }
+    });
+
+    return body;
+  }
+
   async function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -336,11 +490,24 @@ export default function DoctorForm() {
     setAlert('');
     setConflictField(null);
 
+    if (!editing && !cedulaRegex.test(formData.uk_cedula_profesional)) {
+      setConflictField('uk_cedula_profesional');
+      setAlert('Formato de cédula incorrecto. Ingrese únicamente 8 números.');
+      setSaving(false);
+      return;
+    }
+
+    if (!rfcRegex.test(formData.uk_rfc_personal)) {
+      setConflictField('uk_rfc_personal');
+      setAlert('El RFC debe tener 13 caracteres y cumplir la estructura fiscal.');
+      setSaving(false);
+      return;
+    }
+
     try {
       const response = await fetch(editing ? `/api/doctores/${pkFkUsuario}` : '/api/doctores', {
-        method: editing ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        method: 'POST',
+        body: buildRequestBody(),
       });
 
       if (response.status === 409) {
@@ -464,6 +631,7 @@ export default function DoctorForm() {
                   CÉDULA PROFESIONAL
                   <input
                     required
+                    readOnly={editing}
                     placeholder="8 dígitos"
                     style={{ ...styles.input, ...conflictStyle('uk_cedula_profesional') }}
                     value={formData.uk_cedula_profesional}
@@ -488,14 +656,98 @@ export default function DoctorForm() {
               <label style={styles.upload}>
                 <span style={{ color: '#00875A', fontSize: '21px', fontWeight: 900 }}>▣</span>
                 <strong>Adjuntar cédula</strong>
-                <span>Formatos permitidos: PDF (Máx. 5MB)</span>
-                <input style={{ display: 'none' }} type="file" accept="application/pdf" />
+                <span>{documentHelperText('cedula_documento')}</span>
+                <div style={styles.uploadActions}>
+                  {currentDocuments.cedula_documento ? (
+                    <a
+                      href={currentDocuments.cedula_documento.url}
+                      rel="noreferrer"
+                      style={{ ...styles.miniButton, background: '#00875A', color: '#FFFFFF' }}
+                      target="_blank"
+                    >
+                      Ver actual
+                    </a>
+                  ) : null}
+                  {doctorDocuments.cedula_documento ? (
+                    <button
+                      style={{ ...styles.miniButton, background: '#F8D7D7', color: '#DE350B' }}
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        clearSelectedDocument('cedula_documento');
+                      }}
+                    >
+                      Quitar selección
+                    </button>
+                  ) : null}
+                  {currentDocuments.cedula_documento ? (
+                    <button
+                      disabled={saving}
+                      style={{ ...styles.miniButton, background: '#FFE3E6', color: '#DE350B' }}
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        void deleteCurrentDocument('cedula_documento');
+                      }}
+                    >
+                      Eliminar actual
+                    </button>
+                  ) : null}
+                </div>
+                <input
+                  style={{ display: 'none' }}
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(event) => updateDocument('cedula_documento', event)}
+                />
               </label>
               <label style={styles.upload}>
                 <span style={{ color: '#00875A', fontSize: '21px', fontWeight: 900 }}>▣</span>
                 <strong>Adjuntar RFC</strong>
-                <span>Formatos permitidos: PDF (Máx. 5MB)</span>
-                <input style={{ display: 'none' }} type="file" accept="application/pdf" />
+                <span>{documentHelperText('rfc_documento')}</span>
+                <div style={styles.uploadActions}>
+                  {currentDocuments.rfc_documento ? (
+                    <a
+                      href={currentDocuments.rfc_documento.url}
+                      rel="noreferrer"
+                      style={{ ...styles.miniButton, background: '#00875A', color: '#FFFFFF' }}
+                      target="_blank"
+                    >
+                      Ver actual
+                    </a>
+                  ) : null}
+                  {doctorDocuments.rfc_documento ? (
+                    <button
+                      style={{ ...styles.miniButton, background: '#F8D7D7', color: '#DE350B' }}
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        clearSelectedDocument('rfc_documento');
+                      }}
+                    >
+                      Quitar selección
+                    </button>
+                  ) : null}
+                  {currentDocuments.rfc_documento ? (
+                    <button
+                      disabled={saving}
+                      style={{ ...styles.miniButton, background: '#FFE3E6', color: '#DE350B' }}
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        void deleteCurrentDocument('rfc_documento');
+                      }}
+                    >
+                      Eliminar actual
+                    </button>
+                  ) : null}
+                </div>
+                <input
+                  style={{ display: 'none' }}
+                  type="file"
+                  accept="application/pdf"
+                  onChange={(event) => updateDocument('rfc_documento', event)}
+                />
               </label>
             </div>
 

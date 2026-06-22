@@ -2,6 +2,8 @@ import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-d
 import DoctorDetalle from './pages/Doctores/DoctorDetalle';
 import DoctorForm from './pages/Doctores/DoctorForm';
 import DoctoresList from './pages/Doctores/DoctoresList';
+import EspecialidadForm from './pages/Especialidades/EspecialidadForm';
+import EspecialidadesList from './pages/Especialidades/EspecialidadesList';
 
 function App() {
   return (
@@ -12,6 +14,9 @@ function App() {
         <Route path="/doctores/nuevo" element={<DoctorForm />} />
         <Route path="/doctores/:id" element={<DoctorDetalle />} />
         <Route path="/doctores/:id/editar" element={<DoctorForm />} />
+        <Route path="/especialidades" element={<EspecialidadesList />} />
+        <Route path="/especialidades/nueva" element={<EspecialidadForm />} />
+        <Route path="/especialidades/:id/editar" element={<EspecialidadForm />} />
       </Routes>
     </Router>
   );

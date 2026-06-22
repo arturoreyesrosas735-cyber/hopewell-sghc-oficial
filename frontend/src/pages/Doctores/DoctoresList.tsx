@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ActivationModal, { type ActivationPayload } from './ActivationModal';
+import ActivationSuccessModal from './ActivationSuccessModal';
 import DoctorLayout, { useDoctorBreakpoints } from './DoctorLayout';
+import InactivationModal, { type InactivationPayload } from './InactivationModal';
+import InactivationSuccessModal from './InactivationSuccessModal';
 
 type Doctor = {
   pk_fk_usuario: number;
@@ -23,6 +27,13 @@ type Especialidad = {
 type EstadoEmpleado = {
   id_estado_empleado: number;
   ukTipo_estado: string;
+};
+
+type PaginationMeta = {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
 };
 
 const styles = {
@@ -233,7 +244,17 @@ export default function DoctoresList() {
   const [estadosEmpleado, setEstadosEmpleado] = useState<EstadoEmpleado[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [doctorToDisable, setDoctorToDisable] = useState<Doctor | null>(null);
+  const [doctorAction, setDoctorAction] = useState<{ doctor: Doctor; action: 'inactivar' | 'reactivar' } | null>(null);
+  const [inactivatedDoctor, setInactivatedDoctor] = useState<Doctor | null>(null);
+  const [activatedDoctor, setActivatedDoctor] = useState<Doctor | null>(null);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    current_page: 1,
+    last_page: 1,
+    per_page: 10,
+    total: 0,
+  });
   const debouncedSearch = useDebouncedValue(search, 300);
 
   useEffect(() => {
@@ -261,6 +282,10 @@ export default function DoctoresList() {
   }, []);
 
   useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, especialidad, estado]);
+
+  useEffect(() => {
     const controller = new AbortController();
 
     async function loadDoctores() {
@@ -268,10 +293,13 @@ export default function DoctoresList() {
       setError('');
 
       try {
-        const query = debouncedSearch.trim()
-          ? `?search=${encodeURIComponent(debouncedSearch.trim())}`
-          : '';
-        const response = await fetch(`/api/doctores${query}`, { signal: controller.signal });
+        const query = new URLSearchParams({
+          page: String(page),
+          search: debouncedSearch.trim(),
+          especialidad,
+          estado,
+        }).toString();
+        const response = await fetch(`/api/doctores?${query}`, { signal: controller.signal });
 
         if (!response.ok || !(response.headers.get('content-type') ?? '').includes('application/json')) {
           setDoctores([]);
@@ -280,6 +308,12 @@ export default function DoctoresList() {
 
         const data = await response.json();
         setDoctores(Array.isArray(data) ? data : data.data ?? []);
+        setPagination(data.meta ?? {
+          current_page: 1,
+          last_page: 1,
+          per_page: 10,
+          total: Array.isArray(data) ? data.length : data.data?.length ?? 0,
+        });
       } catch (currentError) {
         if ((currentError as DOMException).name !== 'AbortError') {
           setDoctores([]);
@@ -291,42 +325,54 @@ export default function DoctoresList() {
 
     void loadDoctores();
     return () => controller.abort();
-  }, [debouncedSearch]);
+  }, [debouncedSearch, especialidad, estado, page]);
 
-  const filteredRows = useMemo(() => {
-    return doctores.filter((doctor) => {
-      const specialtyMatch = especialidad === 'Todas' || doctor.especialidad === especialidad;
-      const statusMatch = estado === 'Todos' || (doctor.estatus ?? 'Activo') === estado;
-      return specialtyMatch && statusMatch;
-    });
-  }, [doctores, especialidad, estado]);
+  const rows = useMemo(() => doctores, [doctores]);
 
-  async function inactivarDoctor() {
-    if (!doctorToDisable) {
+  function isActiveDoctor(doctor: Doctor) {
+    const normalized = (doctor.estatus ?? 'Activo').toLowerCase();
+    return normalized.includes('activo') && !normalized.includes('inactivo');
+  }
+
+  async function changeDoctorStatus(payload?: InactivationPayload | ActivationPayload) {
+    if (!doctorAction) {
       return;
     }
 
+    setStatusSaving(true);
+
     try {
-      const response = await fetch(`/api/doctores/${doctorToDisable.pk_fk_usuario}/inactivar`, {
+      const response = await fetch(`/api/doctores/${doctorAction.doctor.pk_fk_usuario}/${doctorAction.action}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        throw new Error('No fue posible inactivar el doctor.');
+        throw new Error('No fue posible actualizar el estado del doctor.');
       }
 
+      const nextStatus = doctorAction.action === 'inactivar' ? 'Inactivo' : 'Activo';
       setDoctores((current) =>
         current.map((doctor) =>
-          doctor.pk_fk_usuario === doctorToDisable.pk_fk_usuario
-            ? { ...doctor, estatus: 'Inactivo' }
+          doctor.pk_fk_usuario === doctorAction.doctor.pk_fk_usuario
+            ? { ...doctor, estatus: nextStatus }
             : doctor,
         ),
       );
+
+      if (doctorAction.action === 'inactivar') {
+        setInactivatedDoctor({ ...doctorAction.doctor, estatus: nextStatus });
+      }
+
+      if (doctorAction.action === 'reactivar') {
+        setActivatedDoctor({ ...doctorAction.doctor, estatus: nextStatus });
+      }
     } catch {
-      setError('No fue posible inactivar el doctor.');
+      setError('No fue posible actualizar el estado del doctor.');
     } finally {
-      setDoctorToDisable(null);
+      setStatusSaving(false);
+      setDoctorAction(null);
     }
   }
 
@@ -439,8 +485,9 @@ export default function DoctoresList() {
               </tr>
             </thead>
             <tbody>
-              {filteredRows.map((item) => {
+              {rows.map((item) => {
                 const badge = estadoBadge(item.estatus);
+                const action = isActiveDoctor(item) ? 'inactivar' : 'reactivar';
 
                 return (
                   <tr key={item.pk_fk_usuario}>
@@ -499,21 +546,27 @@ export default function DoctoresList() {
                         ∕
                       </button>
                       <button
-                        title="Inactivar"
-                        style={{ background: 'transparent', border: 0, color: '#DE350B', cursor: 'pointer', fontSize: '15px' }}
+                        title={action === 'inactivar' ? 'Inactivar' : 'Reactivar'}
+                        style={{
+                          background: 'transparent',
+                          border: 0,
+                          color: action === 'inactivar' ? '#DE350B' : '#00875A',
+                          cursor: 'pointer',
+                          fontSize: '15px',
+                        }}
                         type="button"
-                        onClick={() => setDoctorToDisable(item)}
+                        onClick={() => setDoctorAction({ doctor: item, action })}
                       >
-                        ⊘
+                        {action === 'inactivar' ? '⊘' : '↻'}
                       </button>
                     </td>
                   </tr>
                 );
               })}
-              {!loading && filteredRows.length === 0 ? (
+              {!loading && rows.length === 0 ? (
                 <tr>
                   <td colSpan={5} style={styles.empty}>
-                    No hay doctores registrados todavía.
+                    No se encontraron médicos que coincidan con los criterios de búsqueda.
                   </td>
                 </tr>
               ) : null}
@@ -529,37 +582,75 @@ export default function DoctoresList() {
         </div>
 
         <div style={styles.pager}>
-          <span style={styles.pageButton}>Anterior</span>
-          <span style={{ ...styles.pageButton, background: '#00875A', color: '#FFFFFF' }}>1</span>
-          <span style={styles.pageButton}>2</span>
-          <span style={styles.pageButton}>3</span>
-          <span style={styles.pageButton}>Siguiente</span>
+          <button
+            disabled={page <= 1}
+            style={styles.pageButton}
+            type="button"
+            onClick={() => setPage((current) => Math.max(current - 1, 1))}
+          >
+            Anterior
+          </button>
+          <span style={{ ...styles.pageButton, background: '#00875A', color: '#FFFFFF' }}>{pagination.current_page}</span>
+          <span style={styles.pageButton}>de {pagination.last_page}</span>
+          <button
+            disabled={page >= pagination.last_page}
+            style={styles.pageButton}
+            type="button"
+            onClick={() => setPage((current) => Math.min(current + 1, pagination.last_page))}
+          >
+            Siguiente
+          </button>
         </div>
       </section>
 
-      {doctorToDisable ? (
-        <div role="presentation" style={styles.modalBackdrop}>
-          <div aria-modal="true" role="dialog" style={styles.modal}>
-            <h2 style={{ color: '#172B4D', fontSize: '20px', marginTop: 0 }}>Confirmar inactivación</h2>
-            <p style={{ color: '#44546F' }}>¿Estás seguro de inactivar este expediente médico?</p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
-              <button
-                style={{ ...styles.button, background: '#F4F5F7', color: '#172B4D' }}
-                type="button"
-                onClick={() => setDoctorToDisable(null)}
-              >
-                Cancelar
-              </button>
-              <button
-                style={{ ...styles.button, background: '#DE350B', color: '#FFFFFF' }}
-                type="button"
-                onClick={() => void inactivarDoctor()}
-              >
-                Inactivar
-              </button>
-            </div>
-          </div>
-        </div>
+      {doctorAction?.action === 'inactivar' ? (
+        <InactivationModal
+          doctorName={`${doctorAction.doctor.nombres} ${doctorAction.doctor.apellido_paterno} ${
+            doctorAction.doctor.apellido_materno ?? ''
+          }`.trim()}
+          submitting={statusSaving}
+          onCancel={() => setDoctorAction(null)}
+          onConfirm={(payload) => void changeDoctorStatus(payload)}
+        />
+      ) : null}
+
+      {inactivatedDoctor ? (
+        <InactivationSuccessModal
+          doctorName={`${inactivatedDoctor.nombres} ${inactivatedDoctor.apellido_paterno} ${
+            inactivatedDoctor.apellido_materno ?? ''
+          }`.trim()}
+          onBackToPanel={() => setInactivatedDoctor(null)}
+          onViewProfile={() => {
+            const doctorId = inactivatedDoctor.pk_fk_usuario;
+            setInactivatedDoctor(null);
+            navigate(`/doctores/${doctorId}`);
+          }}
+        />
+      ) : null}
+
+      {doctorAction?.action === 'reactivar' ? (
+        <ActivationModal
+          doctorName={`${doctorAction.doctor.nombres} ${doctorAction.doctor.apellido_paterno} ${
+            doctorAction.doctor.apellido_materno ?? ''
+          }`.trim()}
+          submitting={statusSaving}
+          onCancel={() => setDoctorAction(null)}
+          onConfirm={(payload) => void changeDoctorStatus(payload)}
+        />
+      ) : null}
+
+      {activatedDoctor ? (
+        <ActivationSuccessModal
+          doctorName={`${activatedDoctor.nombres} ${activatedDoctor.apellido_paterno} ${
+            activatedDoctor.apellido_materno ?? ''
+          }`.trim()}
+          onBackToPanel={() => setActivatedDoctor(null)}
+          onViewProfile={() => {
+            const doctorId = activatedDoctor.pk_fk_usuario;
+            setActivatedDoctor(null);
+            navigate(`/doctores/${doctorId}`);
+          }}
+        />
       ) : null}
     </DoctorLayout>
   );
