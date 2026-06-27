@@ -193,3 +193,25 @@ p, h2 { margin:0; }
   .patient-detail-card, .consult-grid, .new-consult-fields, .patient-columns, .vital-mini-grid { grid-template-columns:1fr; }
   .patient-columns span { grid-template-columns:1fr; }
 }
+
+
+.nutrition-status-card { max-width:720px; margin:22px auto 0; text-align:center; padding:12px 16px 4px; }
+.nutrition-status-card p { margin:8px 0; color:#26323a; font-size:18px; }
+.imc-result { display:block; color:#1f2e3a; font-size:22px; margin:6px 0 18px; }
+.nutrition-label { display:block; font-size:25px; margin:8px 0 20px; }
+.nutrition-status-card.underweight .nutrition-label { color:#c9302c; }
+.nutrition-status-card.healthy .nutrition-label { color:#187a37; }
+.nutrition-status-card.overweight .nutrition-label { color:#c07613; }
+.nutrition-status-card.obesity .nutrition-label { color:#c91f2d; }
+.nutrition-scale { position:relative; height:68px; margin:0 auto 0; }
+.nutrition-gradient { height:36px; border-radius:14px; background:linear-gradient(90deg,#f32124 0%,#f15f1f 21%,#79ad86 35%,#83ba8e 53%,#eddb73 65%,#ef7d28 78%,#ed0032 100%); box-shadow:inset 0 0 0 1px rgba(255,255,255,.45), 0 3px 7px rgba(0,0,0,.18); }
+.nutrition-pointer { position:absolute; top:-8px; transform:translateX(-50%); width:0; height:0; border-left:20px solid transparent; border-right:20px solid transparent; border-top:45px solid #fff; filter:drop-shadow(0 2px 2px rgba(0,0,0,.35)); transition:left .2s ease; }
+.nutrition-dividers { position:absolute; inset:34px 0 0; display:grid; grid-template-columns:31% 26% 20% 1fr; pointer-events:none; }
+.nutrition-dividers span { width:0; height:58px; border-left:2px dashed #6f7e7c; justify-self:end; }
+.nutrition-scale-labels { display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid #c7c7c7; padding-top:8px; color:#34424c; font-size:18px; }
+.nutrition-message { margin-top:28px !important; text-align:left; font-weight:900; font-size:20px !important; }
+@media (max-width: 800px) {
+  .nutrition-status-card { max-width:100%; padding-inline:0; }
+  .nutrition-scale-labels { font-size:13px; }
+  .nutrition-pointer { border-left-width:15px; border-right-width:15px; }
+}

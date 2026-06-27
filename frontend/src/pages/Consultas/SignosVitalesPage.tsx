@@ -17,12 +17,15 @@ export function SignosVitalesPage() {
   const [modal, setModal] = useState<ModalState>({ type: 'none' })
   const [notice, setNotice] = useState(initialPatient ? 'Signos vitales exportados correctamente.' : '')
 
-  const imc = useMemo(() => {
+  const imcValue = useMemo(() => {
     const peso = Number(form.peso)
     const tallaCm = Number(form.talla)
-    if (!peso || !tallaCm) return ''
-    return (peso / (tallaCm / 100) ** 2).toFixed(1)
+    if (!peso || !tallaCm) return null
+    return peso / (tallaCm / 100) ** 2
   }, [form.peso, form.talla])
+
+  const imc = imcValue === null ? '' : imcValue.toFixed(2)
+  const nutritionStatus = useMemo(() => getNutritionStatus(imcValue), [imcValue])
 
   function updateField(field: keyof SignosVitalesForm, value: string) { setForm((current) => ({ ...current, [field]: value })) }
   function buscarPaciente() {
@@ -43,9 +46,39 @@ export function SignosVitalesPage() {
   return <ModuleLayout active="signos" crumb="SIGNOS VITALES" userName="Enf. Ana Carranza Duque" userRole="ENFERMERA">
     <section className="page-heading signs-heading"><div><h1>{patient ? 'CAPTURA DE SIGNOS VITALES EJEMPLO' : 'CAPTURA DE SIGNOS VITALES'}</h1><p>Captura y registro de signos vitales del paciente.</p></div><button type="button" className="green-button" onClick={nuevoFormulario}>Nuevo formulario de captura.</button></section>
     {!patient ? <section className="filters-card signs-search"><label className="search-label">⌕ Búsqueda rápida del paciente.</label><div className="main-search"><input value={search} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') buscarPaciente() }} placeholder="BUSCAR POR NOMBRE, CURP, ID PACIENTE, NSS, EXPEDIENTE." /><button type="button" onClick={buscarPaciente}>⌕</button></div>{notice ? <p className="success-notice">{notice}</p> : null}</section> : <section className="patient-strip"><div><strong>Paciente:</strong><span>{patient.nombre}</span></div><div><strong>Expediente:</strong><span>{patient.expediente}</span><b>|</b><span>Edad: {patient.edad}</span><b>|</b><span>Sexo: {patient.sexo}</span></div><div className="active-consult"><strong>Consulta activa:</strong><span>Consulta anual - Dr. Alejandro Vance</span></div>{notice ? <p className="success-notice">{notice}</p> : null}</section>}
-    <section className="vitals-form-card"><h2>SIGNOS VITALES.</h2><div className="vitals-form-grid"><VitalField label="TEMPERATURA" unit="°C" value={form.temperatura} placeholder="INGRESE LA TEMPERATURA" onChange={(v) => updateField('temperatura', v)} /><VitalField label="PRESIÓN ARTERIAL:" unit="mmHg" value={form.presion} placeholder="INGRESE LA PRESIÓN ARTERIAL" onChange={(v) => updateField('presion', v)} /><VitalField label="FRECUENCIA CARDÍACA" unit="lpm" value={form.frecuenciaCardiaca} placeholder="INGRESE LA FC" onChange={(v) => updateField('frecuenciaCardiaca', v)} /><VitalField label="FRECUENCIA RESPIRATORIA:" unit="rpm" value={form.frecuenciaRespiratoria} placeholder="INGRESE LA FR" onChange={(v) => updateField('frecuenciaRespiratoria', v)} /><VitalField label="SATURACIÓN DE OXÍGENO:" unit="%" value={form.saturacionOxigeno} placeholder="INGRESE LA SATURACIÓN" onChange={(v) => updateField('saturacionOxigeno', v)} /><VitalField label="PESO:" unit="kg" value={form.peso} placeholder="INGRESE EL PESO" onChange={(v) => updateField('peso', v)} /><VitalField label="TALLA:" unit="m" value={form.talla} placeholder="INGRESE LA TALLA" onChange={(v) => updateField('talla', v)} /><VitalField label="IMC" unit="kg/m²" value={imc} placeholder="IMC CALCULADO" readOnly onChange={() => undefined} /></div><p className="imc-caption">(Calculado automáticamente)</p><div className="sign-actions"><button type="button" className="outline-button" onClick={limpiar}>Limpiar</button><button type="button" className="green-button" onClick={guardar}>Guardar signos vitales</button></div></section>
+    <section className="vitals-form-card"><h2>SIGNOS VITALES.</h2><div className="vitals-form-grid"><VitalField label="TEMPERATURA" unit="°C" value={form.temperatura} placeholder="INGRESE LA TEMPERATURA" onChange={(v) => updateField('temperatura', v)} /><VitalField label="PRESIÓN ARTERIAL:" unit="mmHg" value={form.presion} placeholder="INGRESE LA PRESIÓN ARTERIAL" onChange={(v) => updateField('presion', v)} /><VitalField label="FRECUENCIA CARDÍACA" unit="lpm" value={form.frecuenciaCardiaca} placeholder="INGRESE LA FC" onChange={(v) => updateField('frecuenciaCardiaca', v)} /><VitalField label="FRECUENCIA RESPIRATORIA:" unit="rpm" value={form.frecuenciaRespiratoria} placeholder="INGRESE LA FR" onChange={(v) => updateField('frecuenciaRespiratoria', v)} /><VitalField label="SATURACIÓN DE OXÍGENO:" unit="%" value={form.saturacionOxigeno} placeholder="INGRESE LA SATURACIÓN" onChange={(v) => updateField('saturacionOxigeno', v)} /><VitalField label="PESO:" unit="kg" value={form.peso} placeholder="INGRESE EL PESO" onChange={(v) => updateField('peso', v)} /><VitalField label="TALLA:" unit="m" value={form.talla} placeholder="INGRESE LA TALLA" onChange={(v) => updateField('talla', v)} /><VitalField label="IMC" unit="kg/m²" value={imc} placeholder="IMC CALCULADO" readOnly onChange={() => undefined} /></div><p className="imc-caption">(Calculado automáticamente)</p>{nutritionStatus ? <NutritionStatusBar imc={imc} status={nutritionStatus} /> : null}<div className="sign-actions"><button type="button" className="outline-button" onClick={limpiar}>Limpiar</button><button type="button" className="green-button" onClick={guardar}>Guardar signos vitales</button></div></section>
     {modal.type === 'invalid' ? <InvalidValuesModal onClose={() => setModal({ type: 'none' })} /> : null}{modal.type === 'no-active' ? <NoActiveModal onClose={nuevoFormulario} /> : null}{modal.type === 'success' ? <SuccessModal patient={patient?.nombre ?? 'Paciente'} onClose={() => setModal({ type: 'none' })} /> : null}
   </ModuleLayout>
+}
+
+
+
+type NutritionTone = 'underweight' | 'healthy' | 'overweight' | 'obesity'
+interface NutritionStatus { label: string; message: string; tone: NutritionTone; pointer: number }
+
+function getNutritionStatus(imcValue: number | null): NutritionStatus | null {
+  if (imcValue === null) return null
+  const pointer = Math.min(100, Math.max(0, ((imcValue - 14) / 26) * 100))
+  if (imcValue < 18.5) return { label: 'Bajo peso', message: 'Se recomienda valoración nutricional para recuperar un peso saludable.', tone: 'underweight', pointer }
+  if (imcValue < 25) return { label: 'Peso saludable', message: 'Felicidades, continua con un peso saludable.', tone: 'healthy', pointer }
+  if (imcValue < 30) return { label: 'Sobrepeso', message: 'El sobrepeso puede aumentar riesgos de salud. Revisa hábitos y seguimiento médico.', tone: 'overweight', pointer }
+  return { label: 'Obesidad', message: 'El sobrepeso y la obesidad pueden ocasionar muchas enfermedades.', tone: 'obesity', pointer }
+}
+
+function NutritionStatusBar({ imc, status }: { imc: string; status: NutritionStatus }) {
+  return <section className={`nutrition-status-card ${status.tone}`}>
+    <p>Tu IMC es:</p>
+    <strong className="imc-result">{imc} kg/m²</strong>
+    <p>Tu estado de nutrición es de:</p>
+    <strong className="nutrition-label">{status.label}</strong>
+    <div className="nutrition-scale" aria-label={`Estado nutricional: ${status.label}`}>
+      <div className="nutrition-gradient" />
+      <span className="nutrition-pointer" style={{ left: `${status.pointer}%` }} />
+      <div className="nutrition-dividers"><span /><span /><span /></div>
+    </div>
+    <div className="nutrition-scale-labels"><span>Bajo peso</span><span>Normal</span><span>Sobrepeso</span><span>Obesidad</span></div>
+    <p className="nutrition-message">{status.message}</p>
+  </section>
 }
 
 interface VitalFieldProps { label: string; unit: string; value: string; placeholder: string; readOnly?: boolean; onChange: (value: string) => void }
