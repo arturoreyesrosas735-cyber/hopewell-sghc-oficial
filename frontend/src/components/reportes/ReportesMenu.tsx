@@ -131,4 +131,4 @@ const footer = {
 };
 
 export default ReportesMenu;
-``
+`` 
