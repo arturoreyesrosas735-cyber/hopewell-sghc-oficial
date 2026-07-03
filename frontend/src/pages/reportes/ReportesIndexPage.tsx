@@ -1,204 +1,335 @@
 import MainLayout from "../../components/layout/MainLayout";
+import { useNavigate } from "react-router-dom";
 
 const ReportesIndexPage = () => {
+  const navigate = useNavigate();
+
   return (
     <MainLayout>
+      <div style={container}>
+        {/* HEADER */}
+        <div style={header}>
+          <div>
+            <h1 style={pageTitle}>📊 Reportes Clínicos</h1>
+            <p style={pageSubtitle}>
+              Gestión, visualización y exportación de reportes médicos
+            </p>
+          </div>
 
-      <div style={grid}>
-
-        {/* IZQUIERDA */}
-        <div style={card}>
-          <h3 style={title}>GENERAR REPORTE CLÍNICO</h3>
-          <span style={sub}>PACIENTES</span>
-
-          <input placeholder="Buscar paciente..." style={input} />
-
-          {[
-            ["Ana López", "26", "F", "Consulta médica"],
-            ["Luis García", "36", "M", "Signos"],
-            ["Dr. Alonso Ruiz", "45", "M", "Consulta médica"]
-          ].map((p, i) => (
-            <div key={i} style={row}>
-              <input type="radio" defaultChecked={i === 0} />
-              <span>{p[0]}</span>
-              <span>{p[1]}</span>
-              <span>{p[2]}</span>
-              <span>{p[3]}</span>
-              <button style={btnMini}>Ver / Editar</button>
-            </div>
-          ))}
-
-          <button style={btnPrimary}>
-            GENERAR REPORTE CLÍNICO
-          </button>
+          <div style={badge}>
+            M12
+          </div>
         </div>
 
-        {/* DERECHA */}
-        <div style={right}>
-
+        {/* CONTENIDO PRINCIPAL */}
+        <div style={grid}>
+          {/* MODULO REPORTES */}
           <div style={card}>
-            <h3 style={title}>VISUALIZACIÓN DE REPORTES</h3>
+            <h2 style={title}>Generar Reportes</h2>
+
+            <p style={subtitle}>
+              Selecciona el reporte que deseas consultar.
+            </p>
+
+            <div style={menuContainer}>
+              <button
+                style={btnPrimary}
+                onClick={() =>
+                  navigate("/reportes/resumen-clinico")
+                }
+              >
+                📄 Resumen Clínico
+              </button>
+
+              <button
+                style={btnPrimary}
+                onClick={() =>
+                  navigate("/reportes/historial-consultas")
+                }
+              >
+                📑 Historial de Consultas
+              </button>
+
+              <button
+                style={btnPrimary}
+                onClick={() =>
+                  navigate("/reportes/por-medico")
+                }
+              >
+                👨‍⚕️ Reporte por Médico
+              </button>
+
+              <button
+                style={btnPrimary}
+                onClick={() =>
+                  navigate("/reportes/por-sede")
+                }
+              >
+                🏥 Reporte por Sede
+              </button>
+
+              <button
+                style={btnPrimary}
+                onClick={() =>
+                  navigate("/reportes/por-periodo")
+                }
+              >
+                📅 Reporte por Período
+              </button>
+            </div>
+          </div>
+
+          {/* VISUALIZACION */}
+          <div style={card}>
+            <h2 style={title}>
+              Visualización de Reportes
+            </h2>
 
             <div style={chart}>
-              <div style={center}>256</div>
+              <div style={chartCenter}>
+                <span style={chartCenterTitle}>
+                  SGHC
+                </span>
+
+                <span style={chartCenterText}>
+                  M12
+                </span>
+              </div>
             </div>
 
+            <p style={chartText}>
+              Sistema de Gestión de Historial Clínico
+            </p>
+
+            <div style={actions}>
+              <button style={actionBtn}>
+                👁 Visualizar
+              </button>
+
+              <button style={actionBtn}>
+                📥 Exportar
+              </button>
+
+              <button style={actionBtn}>
+                🖨 Imprimir
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* KPIs */}
+        <div style={statsGrid}>
+          <div style={statCard}>
+            <div style={statIcon}>👨</div>
+
+            <h2 style={statNumber}>256</h2>
+
+            <p style={statText}>Pacientes</p>
           </div>
 
-          <div style={cardRow}>
-            <div style={action}>Visualizar</div>
-            <div style={action}>Exportar</div>
-            <div style={action}>Imprimir</div>
+          <div style={statCard}>
+            <div style={statIcon}>🩺</div>
+
+            <h2 style={statNumber}>112</h2>
+
+            <p style={statText}>Consultas</p>
           </div>
 
-        </div>
+          <div style={statCard}>
+            <div style={statIcon}>👨‍⚕️</div>
 
-      </div>
+            <h2 style={statNumber}>37</h2>
 
-      {/* HISTORIAL */}
-      <div style={card}>
-        <h3 style={title}>HISTORIAL DE CONSULTA</h3>
+            <p style={statText}>Médicos</p>
+          </div>
 
-        <div style={tableHeader}>
-          <span>Acción</span>
-          <span>Fecha</span>
-          <span>Usuario</span>
-          <span>Detalle</span>
-        </div>
+          <div style={statCard}>
+            <div style={statIcon}>📄</div>
 
-        <div style={tableRow}>
-          <span>Baja usuario</span>
-          <span>14-04</span>
-          <span>Admin</span>
-          <span>Dado de baja</span>
-        </div>
+            <h2 style={statNumber}>5</h2>
 
-        <div style={tableRow}>
-          <span>Edición</span>
-          <span>13-04</span>
-          <span>Admin</span>
-          <span>Editado</span>
+            <p style={statText}>Tipos de Reporte</p>
+          </div>
         </div>
       </div>
-
     </MainLayout>
   );
 };
 
-/* ---------- ESTILOS ---------- */
+/* =========================== */
+/* ESTILOS */
+/* =========================== */
+
+const container = {
+  padding: "24px",
+  background: "#F5F7FA",
+  minHeight: "100vh",
+};
+
+const header = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "30px",
+};
+
+const pageTitle = {
+  fontSize: "36px",
+  fontWeight: 700,
+  color: "#1E293B",
+  marginBottom: "5px",
+};
+
+const pageSubtitle = {
+  color: "#64748B",
+  fontSize: "15px",
+};
+
+const badge = {
+  background:
+    "linear-gradient(135deg,#6FBF73,#4CAF50)",
+  color: "#fff",
+  padding: "10px 22px",
+  borderRadius: "30px",
+  fontWeight: 700,
+  fontSize: "18px",
+};
 
 const grid = {
   display: "grid",
-  gridTemplateColumns: "2fr 1fr",
+  gridTemplateColumns: "1fr 1.8fr",
   gap: "24px",
-  marginBottom: "20px"
-};
-
-const right = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "20px"
 };
 
 const card = {
-  background: "#fff",
-  padding: "28px",
-  borderRadius: "18px",
-  border: "1px solid #E6E9ED",
-  boxShadow: "0 8px 18px rgba(0,0,0,0.05)"
+  background: "#FFFFFF",
+  borderRadius: "24px",
+  padding: "32px",
+  border: "1px solid #E5E7EB",
+  boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
 };
 
 const title = {
-  fontWeight: 600,
-  fontSize: "18px",
-  marginBottom: "10px"
+  fontSize: "28px",
+  fontWeight: 700,
+  marginBottom: "10px",
 };
 
-const sub = {
-  fontSize: "13px",
+const subtitle = {
   color: "#6FBF73",
-  fontWeight: 500
+  marginBottom: "24px",
+  fontSize: "15px",
 };
 
-const input = {
-  width: "100%",
-  padding: "14px 16px",
-  borderRadius: "12px",
-  border: "1px solid #E5E7EB",
-  margin: "12px 0"
-};
-
-const row = {
-  display: "grid",
-  gridTemplateColumns: "30px 1fr 80px 40px 1fr 140px",
-  padding: "12px",
-  fontSize: "14px",
-  borderBottom: "1px solid #eee",
-  alignItems: "center"
-};
-
-const btnMini = {
-  background: "#E6F4EA",
-  border: "none",
-  padding: "6px 12px",
-  borderRadius: "8px"
+const menuContainer = {
+  display: "flex",
+  flexDirection: "column" as const,
+  gap: "14px",
 };
 
 const btnPrimary = {
-  marginTop: "18px",
-  background: "#6FBF73",
+  background:
+    "linear-gradient(135deg,#6FBF73,#4CAF50)",
   color: "#fff",
-  padding: "14px",
-  borderRadius: "12px",
   border: "none",
-  width: "100%",
-  fontWeight: 600
+  borderRadius: "18px",
+  padding: "18px",
+  fontWeight: 600,
+  fontSize: "16px",
+  cursor: "pointer",
+  boxShadow:
+    "0 8px 20px rgba(111,191,115,.25)",
 };
 
 const chart = {
-  width: "160px",
-  height: "160px",
+  width: "280px",
+  height: "280px",
   borderRadius: "50%",
-  background: "conic-gradient(#6FBF73 40%, #ddd 60%)",
+  background:
+    "conic-gradient(#6FBF73 0 75%, #D9F0DB 75% 100%)",
   margin: "20px auto",
-  position: "relative"
+  position: "relative" as const,
+  boxShadow:
+    "0 15px 35px rgba(111,191,115,.25)",
 };
 
-const center = {
-  position: "absolute",
+const chartCenter = {
+  position: "absolute" as const,
+  width: "130px",
+  height: "130px",
+  background: "#fff",
+  borderRadius: "50%",
   top: "50%",
   left: "50%",
-  transform: "translate(-50%,-50%)",
-  fontSize: "16px"
-};
-
-const cardRow = {
+  transform: "translate(-50%, -50%)",
   display: "flex",
-  gap: "12px"
+  justifyContent: "center",
+  alignItems: "center",
+  flexDirection: "column" as const,
 };
 
-const action = {
+const chartCenterTitle = {
+  fontWeight: 700,
+  fontSize: "22px",
+};
+
+const chartCenterText = {
+  color: "#6FBF73",
+  fontWeight: 700,
+  fontSize: "18px",
+};
+
+const chartText = {
+  textAlign: "center" as const,
+  fontSize: "18px",
+  fontWeight: 500,
+  color: "#334155",
+};
+
+const actions = {
+  display: "flex",
+  gap: "14px",
+  marginTop: "24px",
+};
+
+const actionBtn = {
   flex: 1,
-  padding: "14px",
-  borderRadius: "12px",
-  border: "1px solid #E5E7EB",
-  textAlign: "center"
-};
-
-const tableHeader = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr 1fr 2fr",
+  padding: "16px",
+  borderRadius: "16px",
+  border: "1px solid #E2E8F0",
+  background: "#fff",
+  cursor: "pointer",
   fontWeight: 600,
-  fontSize: "14px",
-  marginTop: "10px"
+  fontSize: "15px",
 };
 
-const tableRow = {
+const statsGrid = {
   display: "grid",
-  gridTemplateColumns: "1fr 1fr 1fr 2fr",
-  padding: "10px 0",
-  borderBottom: "1px solid #eee",
-  fontSize: "14px"
+  gridTemplateColumns: "repeat(4, 1fr)",
+  gap: "20px",
+  marginTop: "30px",
+};
+
+const statCard = {
+  background: "#FFFFFF",
+  borderRadius: "24px",
+  padding: "24px",
+  textAlign: "center" as const,
+  boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+};
+
+const statIcon = {
+  fontSize: "36px",
+};
+
+const statNumber = {
+  margin: "12px 0 5px 0",
+  fontSize: "32px",
+  color: "#16A34A",
+};
+
+const statText = {
+  color: "#64748B",
 };
 
 export default ReportesIndexPage;
