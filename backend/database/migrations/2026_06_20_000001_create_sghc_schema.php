@@ -96,11 +96,11 @@ return new class extends Migration
 
         Schema::create('tb_medicamento', function (Blueprint $table) {
             $table->smallIncrements('id_medicamento');
-            $table->string('uk_nombremedicamento', 150);
+            $table->string('uk_nombre_medicamento', 150);
             $table->string('descripcion', 255)->nullable();
             $table->string('presentacion', 100);
             $table->string('concentracion', 100);
-            $table->unique('uk_nombremedicamento', 'uk_tb_medicamento_nombremedicamento');
+            $table->unique('uk_nombre_medicamento', 'uk_tb_medicamento_nombre_medicamento');
         });
 
         Schema::create('tb_cronicidad', function (Blueprint $table) {
@@ -495,6 +495,7 @@ return new class extends Migration
             $table->date('termino_tratamiento');
             $table->string('indicaciones', 255);
             $table->timestamp('fecha_registro');
+            $table->string('estatus', 20);
             $table->foreign('fk_paciente_tratamiento')->references('id_paciente')->on('tb_paciente');
             $table->foreign('fk_diagnostico_tratamiento')->references('id_diagnostico')->on('tb_diagnostico');
             $table->foreign('fk_padecimiento_tratamiento')->references('id_padecimiento')->on('tb_padecimiento');
@@ -508,6 +509,10 @@ return new class extends Migration
             $table->unsignedSmallInteger('fk_paciente_receta');
             $table->timestamp('fecha_receta');
             $table->text('observaciones')->nullable();
+            $table->string('dosis', 100);
+            $table->string('frecuencia', 100);
+            $table->string('duracion_receta', 100);
+            $table->string('estatus', 20);
             $table->foreign('fk_tratamiento_receta')->references('id_tratamiento')->on('tb_tratamiento');
             $table->foreign('fk_doctor_receta')->references('pk_fk_usuario')->on('tb_doctor');
             $table->foreign('fk_paciente_receta')->references('id_paciente')->on('tb_paciente');
