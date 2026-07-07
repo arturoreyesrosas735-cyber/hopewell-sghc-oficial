@@ -1,0 +1,18 @@
+<svg width="220" height="60" viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- CRUZ -->
+  <g stroke="#2E7D32" stroke-width="4" fill="none">
+    <rect x="10" y="15" width="10" height="30" rx="2"/>
+    <rect x="0" y="25" width="30" height="10" rx="2"/>
+  </g>
+
+  <!-- TEXTO -->
+  <text x="40" y="30" font-family="Segoe UI" font-size="18" font-weight="700" fill="#1D3557">
+    HOPEWELL
+  </text>
+
+  <text x="40" y="48" font-family="Segoe UI" font-size="10" fill="#777">
+    HISTORIALES CLÍNICOS
+  </text>
+
+</svg>
