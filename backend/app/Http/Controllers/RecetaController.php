@@ -10,6 +10,7 @@ use App\Models\Tratamiento;
 use App\Models\Usuario;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -89,6 +90,63 @@ class RecetaController extends Controller
         return $this->apiResponse(true, $registro, 'Receta consultada correctamente');
     }
 
+    public function storeDirecta(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'fk_paciente_receta' => ['required', 'integer', Rule::exists('tb_paciente', 'id_paciente')->where('estatus', 'activo')],
+            'medicamento_texto' => ['required', 'string', 'max:150'],
+            'dosis' => ['required', 'string', 'max:100'],
+            'frecuencia' => ['required', 'string', 'max:100'],
+            'duracion_receta' => ['required', 'string', 'max:100'],
+            'observaciones' => ['nullable', 'string'],
+        ]);
+
+        if ($validator->fails()) {
+            return $this->apiResponse(false, null, 'Datos invalidos.', $validator->errors()->toArray(), 400);
+        }
+
+        $doctorId = $this->resolveDoctorId($request);
+        if (! $doctorId) {
+            return $this->apiResponse(false, null, 'No hay doctor disponible para emitir la receta.', null, 400);
+        }
+
+        $data = $validator->validated();
+        $receta = DB::transaction(function () use ($data, $doctorId) {
+            $medicamentoId = $this->resolveMedicamentoId($data['medicamento_texto']);
+            $diagnosticoId = $this->crearDiagnosticoDirecto((int) $data['fk_paciente_receta']);
+            $padecimientoId = $this->crearPadecimientoDirecto((int) $data['fk_paciente_receta']);
+
+            $tratamientoId = DB::table('tb_tratamiento')->insertGetId([
+                'fk_paciente_tratamiento' => $data['fk_paciente_receta'],
+                'fk_diagnostico_tratamiento' => $diagnosticoId,
+                'fk_padecimiento_tratamiento' => $padecimientoId,
+                'fk_medicamento_tratamiento' => $medicamentoId,
+                'descripcion' => 'Tratamiento generado automaticamente desde receta directa',
+                'inicio_tratamiento' => now()->toDateString(),
+                'termino_tratamiento' => now()->addDays(7)->toDateString(),
+                'indicaciones' => $data['observaciones'] ?? 'Receta directa',
+                'fecha_registro' => now(),
+                'estatus' => 'activo',
+            ], 'id_tratamiento');
+
+            return Receta::create([
+                'fk_tratamiento_receta' => $tratamientoId,
+                'fk_doctor_receta' => $doctorId,
+                'fk_paciente_receta' => $data['fk_paciente_receta'],
+                'fecha_receta' => now(),
+                'observaciones' => $data['observaciones'] ?? null,
+                'dosis' => $data['dosis'],
+                'frecuencia' => $data['frecuencia'],
+                'duracion_receta' => $data['duracion_receta'],
+                'estatus' => 'activo',
+            ]);
+        });
+
+        $this->registrarAuditoria($request, 'CREAR', 'tb_receta', 'Receta directa #' . $receta->id_receta . ' generada correctamente.');
+
+        return $this->apiResponse(true, $receta, 'Receta generada correctamente', null, 201);
+    }
+
     public function indexPorPaciente(int $paciente): JsonResponse
     {
         $pacienteExiste = Paciente::where('estatus', 'activo')->whereKey($paciente)->exists();
@@ -97,13 +155,38 @@ class RecetaController extends Controller
             return $this->apiResponse(false, null, 'Paciente no encontrado.', null, 404);
         }
 
-        $recetas = Receta::with(['tratamiento', 'doctor'])
+        $recetas = Receta::with(['tratamiento.medicamento', 'tratamiento.diagnostico', 'doctor', 'paciente'])
             ->where('fk_paciente_receta', $paciente)
             ->where('estatus', 'activo')
             ->orderByDesc('fecha_receta')
             ->get();
 
         return $this->apiResponse(true, $recetas, 'Recetas consultadas correctamente');
+    }
+
+    public function pdf(int $receta)
+    {
+        $registro = Receta::with(['tratamiento.medicamento', 'tratamiento.diagnostico', 'paciente'])
+            ->findOrFail($receta);
+
+        $paciente = $registro->paciente
+            ? trim($registro->paciente->nombres . ' ' . $registro->paciente->apellido_paterno . ' ' . $registro->paciente->apellido_materno)
+            : 'Paciente no especificado';
+
+        $lines = [
+            'HOPEWELL - HISTORIALES CLINICOS',
+            'RECETA MEDICA',
+            'Paciente: ' . $paciente,
+            'Diagnostico: ' . ($registro->tratamiento->diagnostico->nombre_diagnostico ?? 'No especificado'),
+            'Medicamento: ' . ($registro->tratamiento->medicamento->uk_nombre_medicamento ?? 'No especificado'),
+            'Dosis: ' . $registro->dosis,
+            'Frecuencia: ' . $registro->frecuencia,
+            'Duracion: ' . $registro->duracion_receta,
+            'Observaciones: ' . ($registro->observaciones ?? 'Sin observaciones'),
+            'Fecha: ' . $registro->fecha_receta,
+        ];
+
+        return $this->pdfResponse('receta-' . $registro->id_receta . '.pdf', $lines);
     }
 
     private function resolveDoctorId(Request $request): ?int
@@ -127,6 +210,54 @@ class RecetaController extends Controller
         }
 
         return Doctor::query()->value('pk_fk_usuario');
+    }
+
+    private function resolveMedicamentoId(string $nombre): int
+    {
+        $existing = DB::table('tb_medicamento')
+            ->whereRaw('LOWER(uk_nombre_medicamento) = ?', [strtolower(trim($nombre))])
+            ->value('id_medicamento');
+
+        if ($existing) {
+            return (int) $existing;
+        }
+
+        return (int) DB::table('tb_medicamento')->insertGetId([
+            'uk_nombre_medicamento' => trim($nombre),
+            'descripcion' => 'Medicamento capturado desde receta directa',
+            'presentacion' => 'No especificada',
+            'concentracion' => 'No especificada',
+        ], 'id_medicamento');
+    }
+
+    private function crearDiagnosticoDirecto(int $pacienteId): int
+    {
+        $consultaId = DB::table('tb_consulta_medica')
+            ->join('tb_expediente_clinico', 'tb_expediente_clinico.id_expediente', '=', 'tb_consulta_medica.fk_expediente_consulta_medica')
+            ->where('tb_expediente_clinico.fk_paciente_expediente_clinico', $pacienteId)
+            ->orderByDesc('tb_consulta_medica.id_consulta_medica')
+            ->value('tb_consulta_medica.id_consulta_medica');
+
+        return (int) DB::table('tb_diagnostico')->insertGetId([
+            'fk_consulta_medica_diagnostico' => $consultaId ?: DB::table('tb_consulta_medica')->value('id_consulta_medica'),
+            'nombre_diagnostico' => 'Receta directa',
+            'descripcion_diagnostico' => 'Diagnostico generado para receta directa',
+            'observaciones' => null,
+            'fecha_crecion' => now(),
+        ], 'id_diagnostico');
+    }
+
+    private function crearPadecimientoDirecto(int $pacienteId): int
+    {
+        $suffix = now()->format('Hisv');
+        return (int) DB::table('tb_padecimiento')->insertGetId([
+            'uk_nombre_padecimiento' => 'Receta directa ' . $suffix,
+            'uk_codigo_cie' => 'RD' . substr($suffix, -4),
+            'vv_descripcion' => 'Padecimiento generado para receta directa',
+            'fk_enfermedad_padecimiento' => DB::table('tb_enfermedad')->value('id_enfermedad'),
+            'fk_cronicidad_padecimiento' => DB::table('tb_cronicidad')->value('id_cronico'),
+            'fk_paciente_padecimiento' => $pacienteId,
+        ], 'id_padecimiento');
     }
 
     private function registrarAuditoria(Request $request, string $operacion, string $tabla, string $descripcion): void
@@ -179,5 +310,43 @@ class RecetaController extends Controller
             'message' => $message,
             'errors' => $errors,
         ], $status);
+    }
+
+    private function pdfResponse(string $filename, array $lines)
+    {
+        $content = "BT\n/F1 18 Tf\n50 780 Td\n";
+        foreach ($lines as $index => $line) {
+            $size = $index < 2 ? 18 : 11;
+            $content .= "/F1 {$size} Tf\n(" . $this->pdfText($line) . ") Tj\n0 -24 Td\n";
+        }
+        $content .= "ET";
+        $objects = [
+            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+            "<< /Length " . strlen($content) . " >>\nstream\n{$content}\nendstream",
+        ];
+        $pdf = "%PDF-1.4\n";
+        $offsets = [0];
+        foreach ($objects as $i => $object) {
+            $offsets[] = strlen($pdf);
+            $pdf .= ($i + 1) . " 0 obj\n{$object}\nendobj\n";
+        }
+        $xref = strlen($pdf);
+        $pdf .= "xref\n0 " . (count($objects) + 1) . "\n0000000000 65535 f \n";
+        for ($i = 1; $i <= count($objects); $i++) {
+            $pdf .= str_pad((string) $offsets[$i], 10, '0', STR_PAD_LEFT) . " 00000 n \n";
+        }
+        $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\nstartxref\n{$xref}\n%%EOF";
+
+        return response($pdf, 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    private function pdfText(string $text): string
+    {
+        return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text));
     }
 }

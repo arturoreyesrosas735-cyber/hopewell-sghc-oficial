@@ -4,6 +4,9 @@ import type { Receta, RecetaFormData } from "../types/receta.types";
 export const crearReceta = (tratamientoId: number, data: RecetaFormData) =>
   api.post<ApiResponse<Receta>>("/tratamientos/" + tratamientoId + "/recetas", data);
 
+export const crearRecetaDirecta = (data: RecetaFormData) =>
+  api.post<ApiResponse<Receta>>("/recetas", data);
+
 export const getRecetaById = (id: number) =>
   api.get<ApiResponse<Receta>>("/recetas/" + id);
 

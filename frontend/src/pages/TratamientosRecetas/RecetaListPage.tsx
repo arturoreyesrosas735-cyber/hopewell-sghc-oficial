@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import RecetaTable from "../../components/recetas/RecetaTable";
 import PacienteBuscador from "../../components/tratamientos/PacienteBuscador";
 import TratamientosLayout from "../../components/tratamientos/TratamientosLayout";
@@ -14,6 +14,7 @@ const RecetaListPage = () => {
   const [pacienteId, setPacienteId] = useState<number | null>(routePacienteId || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const pacienteNombre = nombrePaciente(recetas[0], pacienteId);
 
   const buscarRecetas = async (id: number) => {
     setPacienteId(id);
@@ -39,13 +40,28 @@ const RecetaListPage = () => {
     <TratamientosLayout title="Consultar recetas">
       <section className="primary-column wide">
         <PacienteBuscador label="Buscar recetas por paciente" onBuscar={buscarRecetas} />
-        {pacienteId ? <h2>Recetas del paciente #{pacienteId}</h2> : null}
+        <div className="resource-toolbar">
+          {pacienteId ? <h2>Recetas de {pacienteNombre}</h2> : <h2>Recetas</h2>}
+          <Link className="floating-action" to="/recetas/nueva">Nueva receta</Link>
+        </div>
         {loading ? <div className="loading-state">Cargando recetas...</div> : null}
         {error ? <div className="error-state">{error}</div> : null}
         {pacienteId && !loading && !error ? <RecetaTable recetas={recetas} /> : null}
       </section>
     </TratamientosLayout>
   );
+};
+
+const nombrePaciente = (receta: Receta | undefined, pacienteId: number | null) => {
+  if (!pacienteId) return "Buscar paciente";
+
+  const paciente = receta?.paciente;
+
+  if (!paciente) return "paciente seleccionado";
+
+  return [paciente.nombres, paciente.apellido_paterno, paciente.apellido_materno]
+    .filter(Boolean)
+    .join(" ");
 };
 
 export default RecetaListPage;

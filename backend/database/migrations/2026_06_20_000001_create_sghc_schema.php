@@ -384,6 +384,8 @@ return new class extends Migration
             $table->text('descripcion')->nullable();
             $table->string('direccion_ip', 45)->nullable();
             $table->foreign('fk_usuario_auditoria')->references('id_usuario')->on('tb_usuario');
+            $table->index('fk_usuario_auditoria', 'idx_tb_bitacora_auditoria_usuario');
+            $table->index('fecha_registro', 'idx_tb_bitacora_auditoria_fecha');
         });
 
         Schema::create('tb_expediente_clinico', function (Blueprint $table) {

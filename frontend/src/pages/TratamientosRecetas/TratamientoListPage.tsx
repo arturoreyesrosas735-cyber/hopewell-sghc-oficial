@@ -14,6 +14,7 @@ const TratamientoListPage = () => {
   const [pacienteId, setPacienteId] = useState<number | null>(routePacienteId || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const pacienteNombre = nombrePaciente(tratamientos[0], pacienteId);
 
   const buscarTratamientos = async (id: number) => {
     setPacienteId(id);
@@ -46,7 +47,7 @@ const TratamientoListPage = () => {
           <article className="patient-card">
             <div className="patient-avatar" aria-hidden="true">+</div>
             <div>
-              <h2>{pacienteId ? "Paciente #" + pacienteId : "Buscar paciente"}</h2>
+              <h2>{pacienteNombre}</h2>
               <p>Consulta tratamientos activos, genera recetas y revisa indicaciones registradas.</p>
             </div>
           </article>
@@ -59,11 +60,11 @@ const TratamientoListPage = () => {
                 <span>Nuevo tratamiento</span>
               </Link>
               <Link
-                to={pacienteId ? "/pacientes/" + pacienteId + "/recetas" : "/tratamientos-recetas"}
+                to="/recetas/nueva"
                 className="action-card blue"
               >
                 <strong>Rx</strong>
-                <span>Consultar recetas</span>
+                <span>Nueva receta</span>
               </Link>
               <Link
                 to={pacienteId ? "/pacientes/" + pacienteId + "/tratamientos" : "/tratamientos-recetas"}
@@ -96,6 +97,18 @@ const TratamientoListPage = () => {
       </div>
     </TratamientosLayout>
   );
+};
+
+const nombrePaciente = (tratamiento: Tratamiento | undefined, pacienteId: number | null) => {
+  if (!pacienteId) return "Buscar paciente";
+
+  const paciente = tratamiento?.paciente;
+
+  if (!paciente) return "Paciente #" + pacienteId;
+
+  return [paciente.nombres, paciente.apellido_paterno, paciente.apellido_materno]
+    .filter(Boolean)
+    .join(" ");
 };
 
 export default TratamientoListPage;

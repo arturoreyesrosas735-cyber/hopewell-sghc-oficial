@@ -16,6 +16,8 @@ const RecetaTable = ({ recetas }: RecetaTableProps) => {
         <thead>
           <tr>
             <th>Fecha</th>
+            <th>Paciente</th>
+            <th>Medicamento</th>
             <th>Dosis</th>
             <th>Frecuencia</th>
             <th>Duracion</th>
@@ -26,6 +28,8 @@ const RecetaTable = ({ recetas }: RecetaTableProps) => {
           {recetas.map((receta) => (
             <tr key={receta.id_receta}>
               <td>{new Date(receta.fecha_receta).toLocaleDateString("es-MX")}</td>
+              <td>{nombrePaciente(receta)}</td>
+              <td>{receta.tratamiento?.medicamento?.uk_nombre_medicamento ?? "Sin medicamento"}</td>
               <td>{receta.dosis}</td>
               <td>{receta.frecuencia}</td>
               <td>{receta.duracion_receta}</td>
@@ -36,6 +40,16 @@ const RecetaTable = ({ recetas }: RecetaTableProps) => {
       </table>
     </div>
   );
+};
+
+const nombrePaciente = (receta: Receta) => {
+  const paciente = receta.paciente;
+
+  if (!paciente) return "Paciente no especificado";
+
+  return [paciente.nombres, paciente.apellido_paterno, paciente.apellido_materno]
+    .filter(Boolean)
+    .join(" ");
 };
 
 export default RecetaTable;

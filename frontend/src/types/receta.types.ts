@@ -9,11 +9,28 @@ export interface Receta {
   frecuencia: string;
   duracion_receta: string;
   estatus: string;
+  paciente?: {
+    id_paciente: number;
+    nombres: string;
+    apellido_paterno: string;
+    apellido_materno?: string | null;
+  };
+  tratamiento?: {
+    id_tratamiento: number;
+    descripcion?: string | null;
+    diagnostico?: {
+      nombre_diagnostico: string;
+    };
+    medicamento?: {
+      uk_nombre_medicamento: string;
+    };
+  };
 }
 
 export interface RecetaFormData {
   fk_tratamiento_receta: number;
   fk_paciente_receta: number;
+  medicamento_texto?: string;
   fecha_receta?: string;
   observaciones?: string;
   dosis: string;

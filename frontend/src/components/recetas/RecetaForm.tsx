@@ -1,17 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { getPacientesCatalogo, type PacienteCatalogo } from "../../services/catalogoM6Service";
 import { getApiFieldErrors, getApiErrorMessage } from "../../services/api";
-import { crearReceta } from "../../services/recetaService";
+import { crearRecetaDirecta } from "../../services/recetaService";
 import type { RecetaFormData } from "../../types/receta.types";
 
 const RecetaForm = () => {
   const navigate = useNavigate();
-  const params = useParams();
-  const tratamientoIdFromRoute = Number(params.id ?? 0);
+  const [pacientes, setPacientes] = useState<PacienteCatalogo[]>([]);
   const [form, setForm] = useState<RecetaFormData>({
-    fk_tratamiento_receta: tratamientoIdFromRoute,
+    fk_tratamiento_receta: 0,
     fk_paciente_receta: 0,
+    medicamento_texto: "",
     dosis: "",
     frecuencia: "",
     duracion_receta: "",
@@ -21,6 +22,12 @@ const RecetaForm = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    getPacientesCatalogo()
+      .then((response) => setPacientes(response.data.data))
+      .catch(() => setMessage("No fue posible cargar pacientes."));
+  }, []);
+
   const updateField = (field: keyof RecetaFormData, value: string) => {
     const nextValue = field.startsWith("fk_") ? Number(value) : value;
     setForm((current) => ({ ...current, [field]: nextValue }));
@@ -28,13 +35,11 @@ const RecetaForm = () => {
 
   const validate = () => {
     const errors: Record<string, string[]> = {};
-
-    if (!form.fk_tratamiento_receta) errors.fk_tratamiento_receta = ["Debe seleccionar un tratamiento"];
     if (!form.fk_paciente_receta) errors.fk_paciente_receta = ["Debe seleccionar un paciente"];
-    if (!form.dosis.trim() || form.dosis.length > 100) errors.dosis = ["La dosis es obligatoria"];
-    if (!form.frecuencia.trim() || form.frecuencia.length > 100) errors.frecuencia = ["La frecuencia es obligatoria"];
-    if (!form.duracion_receta.trim() || form.duracion_receta.length > 100) errors.duracion_receta = ["La duracion es obligatoria"];
-
+    if (!form.medicamento_texto?.trim()) errors.medicamento_texto = ["El medicamento es obligatorio"];
+    if (!form.dosis.trim()) errors.dosis = ["La dosis es obligatoria"];
+    if (!form.frecuencia.trim()) errors.frecuencia = ["La frecuencia es obligatoria"];
+    if (!form.duracion_receta.trim()) errors.duracion_receta = ["La duracion es obligatoria"];
     return errors;
   };
 
@@ -43,13 +48,11 @@ const RecetaForm = () => {
     const errors = validate();
     setFieldErrors(errors);
     setMessage("");
-
     if (Object.keys(errors).length > 0) return;
 
     try {
       setLoading(true);
-      const response = await crearReceta(form.fk_tratamiento_receta, form);
-      setMessage("Receta generada correctamente");
+      const response = await crearRecetaDirecta(form);
       navigate("/recetas/" + response.data.data.id_receta);
     } catch (error) {
       setFieldErrors(getApiFieldErrors(error));
@@ -64,29 +67,36 @@ const RecetaForm = () => {
   return (
     <form className="surface-panel form-grid" onSubmit={handleSubmit}>
       {message ? <div className="notice span-2">{message}</div> : null}
-      <label>
-        Tratamiento
-        <input type="number" value={form.fk_tratamiento_receta || ""} onChange={(event) => updateField("fk_tratamiento_receta", event.target.value)} />
-        {errorFor("fk_tratamiento_receta") ? <span className="field-error">{errorFor("fk_tratamiento_receta")}</span> : null}
-      </label>
-      <label>
+      <label className="span-2">
         Paciente
-        <input type="number" value={form.fk_paciente_receta || ""} onChange={(event) => updateField("fk_paciente_receta", event.target.value)} />
+        <select value={form.fk_paciente_receta || ""} onChange={(event) => updateField("fk_paciente_receta", event.target.value)}>
+          <option value="">Selecciona un paciente</option>
+          {pacientes.map((paciente) => (
+            <option key={paciente.id_paciente} value={paciente.id_paciente}>
+              {[paciente.nombres, paciente.apellido_paterno, paciente.apellido_materno].filter(Boolean).join(" ")}
+            </option>
+          ))}
+        </select>
         {errorFor("fk_paciente_receta") ? <span className="field-error">{errorFor("fk_paciente_receta")}</span> : null}
+      </label>
+      <label className="span-2">
+        Medicamento
+        <input value={form.medicamento_texto} onChange={(event) => updateField("medicamento_texto", event.target.value)} placeholder="Ej. Amoxicilina 500 mg" />
+        {errorFor("medicamento_texto") ? <span className="field-error">{errorFor("medicamento_texto")}</span> : null}
       </label>
       <label>
         Dosis
-        <input maxLength={100} value={form.dosis} onChange={(event) => updateField("dosis", event.target.value)} />
+        <input maxLength={100} value={form.dosis} onChange={(event) => updateField("dosis", event.target.value)} placeholder="Ej. 1 capsula" />
         {errorFor("dosis") ? <span className="field-error">{errorFor("dosis")}</span> : null}
       </label>
       <label>
         Frecuencia
-        <input maxLength={100} value={form.frecuencia} onChange={(event) => updateField("frecuencia", event.target.value)} />
+        <input maxLength={100} value={form.frecuencia} onChange={(event) => updateField("frecuencia", event.target.value)} placeholder="Ej. Cada 8 horas" />
         {errorFor("frecuencia") ? <span className="field-error">{errorFor("frecuencia")}</span> : null}
       </label>
       <label className="span-2">
         Duracion
-        <input maxLength={100} value={form.duracion_receta} onChange={(event) => updateField("duracion_receta", event.target.value)} />
+        <input maxLength={100} value={form.duracion_receta} onChange={(event) => updateField("duracion_receta", event.target.value)} placeholder="Ej. 7 dias" />
         {errorFor("duracion_receta") ? <span className="field-error">{errorFor("duracion_receta")}</span> : null}
       </label>
       <label className="span-2">

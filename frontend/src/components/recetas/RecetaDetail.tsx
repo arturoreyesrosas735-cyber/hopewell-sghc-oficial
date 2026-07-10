@@ -7,11 +7,17 @@ interface RecetaDetailProps {
 const RecetaDetail = ({ receta }: RecetaDetailProps) => (
   <section className="detail-grid">
     <article className="surface-panel">
-      <h2>Datos de receta</h2>
+      <div className="detail-actions">
+        <h2>Datos de receta</h2>
+        <div>
+          <button type="button" className="secondary-button" onClick={() => window.print()}>Imprimir</button>
+          <a className="pdf-button" href={`http://127.0.0.1:8000/api/v1/recetas/${receta.id_receta}/pdf`}>Descargar PDF</a>
+        </div>
+      </div>
       <dl className="definition-list">
-        <div><dt>Paciente</dt><dd>#{receta.fk_paciente_receta}</dd></div>
-        <div><dt>Tratamiento</dt><dd>#{receta.fk_tratamiento_receta}</dd></div>
-        <div><dt>Doctor</dt><dd>#{receta.fk_doctor_receta}</dd></div>
+        <div><dt>Paciente</dt><dd>{nombrePaciente(receta)}</dd></div>
+        <div><dt>Tratamiento</dt><dd>{receta.tratamiento?.descripcion ?? "Receta directa"}</dd></div>
+        <div><dt>Medicamento</dt><dd>{receta.tratamiento?.medicamento?.uk_nombre_medicamento ?? "No especificado"}</dd></div>
         <div><dt>Fecha</dt><dd>{new Date(receta.fecha_receta).toLocaleString("es-MX")}</dd></div>
         <div><dt>Estatus</dt><dd>{receta.estatus}</dd></div>
       </dl>
@@ -28,5 +34,11 @@ const RecetaDetail = ({ receta }: RecetaDetailProps) => (
     </article>
   </section>
 );
+
+const nombrePaciente = (receta: Receta) => {
+  const paciente = receta.paciente;
+  if (!paciente) return "Paciente no especificado";
+  return [paciente.nombres, paciente.apellido_paterno, paciente.apellido_materno].filter(Boolean).join(" ");
+};
 
 export default RecetaDetail;
