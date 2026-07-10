@@ -65,16 +65,40 @@ const demoRows = {
     ["Daniel Ortega Santos", "DEMO000000000005", "EXP-0006", "Faringitis aguda", "Tratamiento sintomatico", "Mantener hidratacion", "Alergia leve a polvo", "13/04/2026 10:04"],
   ],
   medico: [
-    ["Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "01/04/2026", "13/04/2026", "42", "56", "13/04/2026 10:35"],
-    ["Dra. Maria Gomez Rivera", "Pediatria", "CED-7821044", "01/04/2026", "13/04/2026", "35", "48", "13/04/2026 10:35"],
-    ["Dr. Luis Torres Vega", "Cardiologia", "CED-3398702", "01/04/2026", "13/04/2026", "29", "38", "13/04/2026 10:35"],
-    ["Dra. Claudia Perez Luna", "Dermatologia", "CED-9102468", "01/04/2026", "13/04/2026", "24", "32", "13/04/2026 10:35"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Andres Fabian Ramirez", "01/04/2026", "08:15", "Control clinico general", "Clinica Central", "Consultorio 2", "Atendida"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Arely Rivera Guillen", "01/04/2026", "09:40", "Revision de estudios", "Clinica Central", "Consultorio 2", "Atendida"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Miguel Torres Salinas", "02/04/2026", "10:30", "Dolor lumbar y seguimiento", "Clinica Norte", "Consultorio 1", "Atendida"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Valeria Mendoza Cruz", "03/04/2026", "12:10", "Gastritis leve", "Clinica Central", "Consultorio 2", "Atendida"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Daniel Ortega Santos", "06/04/2026", "08:50", "Faringitis aguda", "Clinica Sur", "Consultorio 4", "Atendida"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Sofia Hernandez Luna", "07/04/2026", "11:25", "Rinitis alergica", "Clinica Central", "Consultorio 2", "Atendida"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Carlos Eduardo Marin", "08/04/2026", "13:00", "Hipertension control", "Clinica Norte", "Consultorio 1", "Atendida"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Fernanda Pineda Soto", "09/04/2026", "09:15", "Revision metabolica", "Clinica Central", "Consultorio 2", "Atendida"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Rafael Jimenez Mora", "10/04/2026", "16:20", "Seguimiento respiratorio", "Clinica Este", "Consultorio 3", "Atendida"],
+    ["1", "Dr. Alonso Ruiz Mendoza", "Medicina interna", "CED-4589210", "Lucia Morales Diaz", "13/04/2026", "10:35", "Consulta de cierre", "Clinica Central", "Consultorio 2", "Atendida"],
+    ["2", "Dra. Maria Gomez Rivera", "Pediatria", "CED-7821044", "Mateo Castillo Leon", "01/04/2026", "08:30", "Control pediatrico", "Clinica Norte", "Consultorio 5", "Atendida"],
+    ["2", "Dra. Maria Gomez Rivera", "Pediatria", "CED-7821044", "Camila Rojas Vega", "03/04/2026", "10:00", "Cuadro febril", "Clinica Norte", "Consultorio 5", "Atendida"],
+    ["2", "Dra. Maria Gomez Rivera", "Pediatria", "CED-7821044", "Emiliano Fuentes Paz", "07/04/2026", "12:45", "Revision de crecimiento", "Clinica Central", "Consultorio 6", "Atendida"],
+    ["2", "Dra. Maria Gomez Rivera", "Pediatria", "CED-7821044", "Regina Navarro Cruz", "13/04/2026", "09:20", "Alergia estacional", "Clinica Norte", "Consultorio 5", "Atendida"],
+    ["3", "Dr. Luis Torres Vega", "Cardiologia", "CED-3398702", "Jorge Salgado Ruiz", "02/04/2026", "09:10", "Control de presion arterial", "Clinica Central", "Consultorio 3", "Atendida"],
+    ["3", "Dr. Luis Torres Vega", "Cardiologia", "CED-3398702", "Patricia Nunez Ortiz", "04/04/2026", "11:55", "Electrocardiograma", "Clinica Sur", "Consultorio 7", "Atendida"],
+    ["3", "Dr. Luis Torres Vega", "Cardiologia", "CED-3398702", "Roberto Medina Solis", "09/04/2026", "14:20", "Seguimiento cardiologico", "Clinica Central", "Consultorio 3", "Atendida"],
+    ["3", "Dr. Luis Torres Vega", "Cardiologia", "CED-3398702", "Elena Chavez Ramos", "13/04/2026", "16:05", "Valoracion de riesgo", "Clinica Este", "Consultorio 2", "Atendida"],
+    ["4", "Dra. Claudia Perez Luna", "Dermatologia", "CED-9102468", "Nora Aguilar Pena", "01/04/2026", "10:25", "Dermatitis de contacto", "Clinica Este", "Consultorio 1", "Atendida"],
+    ["4", "Dra. Claudia Perez Luna", "Dermatologia", "CED-9102468", "Hector Luna Campos", "06/04/2026", "15:10", "Revision de lesiones", "Clinica Central", "Consultorio 8", "Atendida"],
+    ["4", "Dra. Claudia Perez Luna", "Dermatologia", "CED-9102468", "Andrea Silva Roman", "11/04/2026", "12:35", "Control acne", "Clinica Este", "Consultorio 1", "Atendida"],
   ],
   sede: [
-    ["Hospital Hopewell Central", "Clinica Central", "Av. Salud 120, CDMX", "Dra. Laura Martinez", "55 1205 6949", "central@hopewell.com", "8", "120"],
-    ["Hospital Hopewell Norte", "Clinica Norte", "Calz. Norte 88, CDMX", "Dr. Arturo Salinas", "55 4470 2211", "norte@hopewell.com", "6", "98"],
-    ["Hospital Hopewell Sur", "Clinica Sur", "Av. Insurgentes Sur 510, CDMX", "Dra. Beatriz Leon", "55 8821 4402", "sur@hopewell.com", "5", "76"],
-    ["Hospital Hopewell Este", "Clinica Este", "Circuito Medico 42, CDMX", "Dr. Daniel Cruz", "55 7710 3366", "este@hopewell.com", "4", "64"],
+    ["1", "Hospital Hopewell Central", "Clinica Central", "Av. Salud 120, CDMX", "Dra. Laura Martinez", "55 1205 6949", "central@hopewell.com", "01/04/2026", "38", "8", "4"],
+    ["1", "Hospital Hopewell Central", "Clinica Central", "Av. Salud 120, CDMX", "Dra. Laura Martinez", "55 1205 6949", "central@hopewell.com", "05/04/2026", "44", "8", "4"],
+    ["1", "Hospital Hopewell Central", "Clinica Central", "Av. Salud 120, CDMX", "Dra. Laura Martinez", "55 1205 6949", "central@hopewell.com", "09/04/2026", "51", "8", "5"],
+    ["1", "Hospital Hopewell Central", "Clinica Central", "Av. Salud 120, CDMX", "Dra. Laura Martinez", "55 1205 6949", "central@hopewell.com", "13/04/2026", "47", "8", "5"],
+    ["2", "Hospital Hopewell Norte", "Clinica Norte", "Calz. Norte 88, CDMX", "Dr. Arturo Salinas", "55 4470 2211", "norte@hopewell.com", "01/04/2026", "31", "6", "3"],
+    ["2", "Hospital Hopewell Norte", "Clinica Norte", "Calz. Norte 88, CDMX", "Dr. Arturo Salinas", "55 4470 2211", "norte@hopewell.com", "08/04/2026", "36", "6", "4"],
+    ["2", "Hospital Hopewell Norte", "Clinica Norte", "Calz. Norte 88, CDMX", "Dr. Arturo Salinas", "55 4470 2211", "norte@hopewell.com", "13/04/2026", "39", "6", "4"],
+    ["3", "Hospital Hopewell Sur", "Clinica Sur", "Av. Insurgentes Sur 510, CDMX", "Dra. Beatriz Leon", "55 8821 4402", "sur@hopewell.com", "02/04/2026", "24", "5", "3"],
+    ["3", "Hospital Hopewell Sur", "Clinica Sur", "Av. Insurgentes Sur 510, CDMX", "Dra. Beatriz Leon", "55 8821 4402", "sur@hopewell.com", "10/04/2026", "29", "5", "3"],
+    ["4", "Hospital Hopewell Este", "Clinica Este", "Circuito Medico 42, CDMX", "Dr. Daniel Cruz", "55 7710 3366", "este@hopewell.com", "03/04/2026", "18", "4", "2"],
+    ["4", "Hospital Hopewell Este", "Clinica Este", "Circuito Medico 42, CDMX", "Dr. Daniel Cruz", "55 7710 3366", "este@hopewell.com", "11/04/2026", "21", "4", "2"],
   ],
   periodo: [
     ["01/04/2026 - 13/04/2026", "4", "189", "248", "4", "Clinica Central", "13/04/2026 10:35"],
@@ -219,7 +243,7 @@ const ReporteWorkspace = ({
 
     window.setTimeout(() => {
       if (printWindow) {
-        imprimirReporte(printWindow, titulo, getColumns(kind), getRows(kind, reporte, id), kind);
+        imprimirReporte(printWindow, titulo, getColumns(kind), getRows(kind, reporte, id, fechaInicio, fechaFin), kind);
       } else {
         window.print();
       }
@@ -244,16 +268,16 @@ const ReporteWorkspace = ({
       setMensaje("Archivo exportado correctamente.");
     } catch (err) {
       console.info(getApiErrorMessage(err, "Exportacion demo activada."));
-      descargarExcelDemo(titulo, getColumns(kind), getRows(kind, reporte, id));
+      descargarExcelDemo(titulo, getColumns(kind), getRows(kind, reporte, id, fechaInicio, fechaFin));
       setMensaje("Archivo Excel demo exportado correctamente.");
     } finally {
       setExportando(false);
     }
   };
 
-  const rows = getRows(kind, reporte, id);
+  const rows = getRows(kind, reporte, id, fechaInicio, fechaFin);
   const columns = getColumns(kind);
-  const selectOptions = kind === "sede" ? catalogos.sede : kind === "medico" ? catalogos.medico : pacientesCatalogo;
+  const selectOptions = kind === "sede" || kind === "periodo" ? catalogos.sede : kind === "medico" ? catalogos.medico : pacientesCatalogo;
 
   return (
     <MainLayout title={titulo.toUpperCase()} current={current}>
@@ -352,12 +376,12 @@ const ReporteWorkspace = ({
 const getColumns = (kind: ReporteKind) => {
   if (kind === "historial") return ["Accion", "Fecha", "Usuario", "Detalle"];
   if (kind === "periodo") return ["Periodo", "Medicos", "Pacientes", "Consultas", "Sedes", "Sede principal", "Generado"];
-  if (kind === "sede") return ["Hospital", "Sede", "Direccion", "Responsable", "Telefono", "Correo", "Consultorios", "Consultas"];
+  if (kind === "sede") return ["Hospital", "Sede", "Direccion", "Responsable", "Telefono", "Correo", "Fecha", "Consultas", "Consultorios", "Medicos"];
   if (kind === "resumen") return ["Paciente", "CURP", "Expediente", "Antecedentes", "Diagnostico", "Tratamiento / receta", "Alergias", "Ultima consulta"];
-  return ["Medico", "Especialidad", "Cedula", "Fecha inicio", "Fecha fin", "Pacientes atendidos", "Consultas", "Generado"];
+  return ["Medico", "Especialidad", "Cedula", "Paciente", "Fecha", "Hora", "Motivo", "Sede", "Consultorio", "Estado"];
 };
 
-const getRows = (kind: ReporteKind, reporte: ReporteData | null, selectedId?: string) => {
+const getRows = (kind: ReporteKind, reporte: ReporteData | null, selectedId?: string, fechaInicio?: string, fechaFin?: string) => {
   if (reporte && "diagnosticos" in reporte) {
     return [[
       [reporte.paciente.nombres, reporte.paciente.apellido_paterno, reporte.paciente.apellido_materno].filter(Boolean).join(" "),
@@ -377,10 +401,12 @@ const getRows = (kind: ReporteKind, reporte: ReporteData | null, selectedId?: st
         String(getNested(reporte, "doctor.nombre_completo") ?? "Medico seleccionado"),
         String(getNested(reporte, "doctor.especialidad") ?? "Especialidad no registrada"),
         String(getNested(reporte, "doctor.uk_cedula_profesional") ?? "Cedula no registrada"),
+        String(getNested(reporte, "consultas.0.paciente") ?? "Pacientes del periodo"),
         String(getNested(reporte, "periodo.fecha_inicio") ?? "Inicio"),
-        String(getNested(reporte, "periodo.fecha_fin") ?? "Fin"),
-        String(getNested(reporte, "estadisticas.pacientes_atendidos") ?? "0"),
-        String(getNested(reporte, "estadisticas.total_consultas") ?? "0"),
+        "Periodo",
+        `${getNested(reporte, "estadisticas.pacientes_atendidos") ?? "0"} pacientes / ${getNested(reporte, "estadisticas.total_consultas") ?? "0"} consultas`,
+        "Sedes registradas",
+        "Consultorios usados",
         String(getNested(reporte, "generado_en") ?? new Date().toLocaleString()),
       ]];
     }
@@ -393,8 +419,10 @@ const getRows = (kind: ReporteKind, reporte: ReporteData | null, selectedId?: st
         String(getNested(reporte, "sede.responsable") ?? "Responsable no registrado"),
         String(getNested(reporte, "sede.telefono") ?? "Sin telefono"),
         String(getNested(reporte, "sede.uk_correo") ?? "Sin correo"),
-        String(getNested(reporte, "estadisticas.consultorios_usados") ?? "0"),
+        String(getNested(reporte, "generado_en") ?? new Date().toLocaleString()),
         String(getNested(reporte, "estadisticas.total_consultas") ?? "0"),
+        String(getNested(reporte, "estadisticas.consultorios_usados") ?? "0"),
+        "Medicos activos",
       ]];
     }
 
@@ -411,11 +439,38 @@ const getRows = (kind: ReporteKind, reporte: ReporteData | null, selectedId?: st
     }
   }
 
-  if (kind === "sede") return selectedId ? demoRows.sede.filter((_, index) => String(index + 1) === selectedId) : demoRows.sede;
+  if (kind === "sede") {
+    const rows = selectedId ? demoRows.sede.filter((row) => row[0] === selectedId) : demoRows.sede;
+    return filtrarPorPeriodo(rows, 7, fechaInicio, fechaFin).map((row) => row.slice(1));
+  }
   if (kind === "periodo") return demoRows.periodo;
   if (kind === "historial") return demoRows.historial;
   if (kind === "resumen") return selectedId ? demoRows.resumen.filter((_, index) => String(index + 1) === selectedId) : demoRows.resumen;
-  return selectedId ? demoRows.medico.filter((_, index) => String(index + 1) === selectedId) : demoRows.medico;
+  return filtrarPorPeriodo(
+    selectedId ? demoRows.medico.filter((row) => row[0] === selectedId) : demoRows.medico,
+    5,
+    fechaInicio,
+    fechaFin,
+  ).map((row) => row.slice(1));
+};
+
+const filtrarPorPeriodo = (rows: string[][], fechaIndex: number, fechaInicio?: string, fechaFin?: string) =>
+  rows.filter((row) => {
+    const fecha = fechaDemoAIso(row[fechaIndex]);
+
+    if (!fecha) return true;
+    if (fechaInicio && fecha < fechaInicio) return false;
+    if (fechaFin && fecha > fechaFin) return false;
+
+    return true;
+  });
+
+const fechaDemoAIso = (fecha: string) => {
+  const [dia, mes, anio] = fecha.split("/");
+
+  if (!dia || !mes || !anio) return "";
+
+  return `${anio}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}`;
 };
 
 const getNested = (source: unknown, path: string) =>
@@ -610,11 +665,13 @@ const resumenReporte = (kind: ReporteKind, columns: string[], rows: string[][]) 
   const value = (column: string) => row[columns.indexOf(column)] ?? "No disponible";
 
   if (kind === "medico") {
-    return `${value("Medico")} - ${value("Especialidad")}. Cedula ${value("Cedula")}. Durante el periodo ${value("Fecha inicio")} a ${value("Fecha fin")} atendio ${value("Pacientes atendidos")} pacientes y realizo ${value("Consultas")} consultas.`;
+    const pacientes = new Set(rows.map((item) => item[3])).size;
+    return `${value("Medico")} - ${value("Especialidad")}. Cedula ${value("Cedula")}. El reporte incluye ${rows.length} consultas y ${pacientes} pacientes atendidos, con fechas y horas distribuidas dentro del periodo seleccionado.`;
   }
 
   if (kind === "sede") {
-    return `${value("Hospital")} / ${value("Sede")}. Responsable: ${value("Responsable")}. Consultorios activos: ${value("Consultorios")}. Consultas registradas: ${value("Consultas")}.`;
+    const consultas = rows.reduce((total, item) => total + Number(item[7] ?? 0), 0);
+    return `${value("Hospital")} / ${value("Sede")}. Responsable: ${value("Responsable")}. El reporte agrupa ${consultas} consultas registradas por fecha dentro del periodo seleccionado.`;
   }
 
   if (kind === "periodo") {
@@ -632,20 +689,26 @@ const metricasReporte = (kind: ReporteKind, rows: string[][]) => {
   const row = rows[0] ?? [];
 
   if (kind === "medico") {
+    const pacientes = new Set(rows.map((item) => item[3])).size;
+    const sedes = new Set(rows.map((item) => item[7])).size;
+
     return [
-      { label: "Pacientes atendidos", value: row[5] ?? "0" },
-      { label: "Consultas", value: row[6] ?? "0" },
+      { label: "Pacientes atendidos", value: String(pacientes) },
+      { label: "Consultas", value: String(rows.length) },
       { label: "Especialidad", value: row[1] ?? "No registrada" },
-      { label: "Cedula", value: row[2] ?? "No registrada" },
+      { label: "Sedes visitadas", value: String(sedes) },
     ];
   }
 
   if (kind === "sede") {
+    const consultas = rows.reduce((total, item) => total + Number(item[7] ?? 0), 0);
+    const medicos = rows.reduce((total, item) => total + Number(item[9] ?? 0), 0);
+
     return [
-      { label: "Consultas", value: row[7] ?? "0" },
-      { label: "Consultorios", value: row[6] ?? "0" },
+      { label: "Consultas", value: String(consultas) },
+      { label: "Consultorios", value: row[8] ?? "0" },
       { label: "Responsable", value: row[3] ?? "No registrado" },
-      { label: "Telefono", value: row[4] ?? "No registrado" },
+      { label: "Medicos por corte", value: String(medicos) },
     ];
   }
 
