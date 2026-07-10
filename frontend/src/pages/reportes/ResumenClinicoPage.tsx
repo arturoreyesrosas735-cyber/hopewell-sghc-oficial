@@ -6,9 +6,10 @@ import {
 
 const ResumenClinicoPage = () => (
   <ReporteWorkspace
-    titulo="Resumen Clinico"
-    descripcion="Consulta diagnosticos y tratamientos consolidados por paciente activo."
-    idLabel="ID del paciente"
+    titulo="Generar reporte clinico"
+    current="Generar reporte clinico"
+    kind="resumen"
+    idLabel="Paciente"
     requiereId
     generar={({ id }) => getResumenClinico(Number(id))}
     exportar={({ id }, formato) => exportarResumenClinico(Number(id), formato)}

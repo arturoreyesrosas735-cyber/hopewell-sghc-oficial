@@ -1,96 +1,79 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import ReportesMenu from "../reportes/ReportesMenu";
 
 interface MainLayoutProps {
   children: ReactNode;
+  title?: string;
+  current?: string;
+  breadcrumb?: string;
 }
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+const MainLayout = ({
+  children,
+  title = "REPORTES",
+  current = "Reporte clinico",
+  breadcrumb,
+}: MainLayoutProps) => {
+  const trail = breadcrumb
+    ? breadcrumb.split(">").map((item) => item.trim()).filter(Boolean)
+    : ["Inicio", "Reportes", current];
+
   return (
-    <div style={wrapper}>
+    <div className="report-shell">
       <ReportesMenu />
 
-      <div style={main}>
-        <div style={header}>
-          <div style={headerTop}>
-            <h2 style={title}>REPORTES</h2>
-            <div style={icons}>! [] =</div>
+      <main className="report-main">
+        <header className="report-topbar">
+          <div>
+            <h1>{title}</h1>
+            <div className="report-breadcrumbs">
+              {trail.map((item, index) => (
+                <span key={`${item}-${index}`} className={index === trail.length - 1 ? "last" : ""}>
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
 
-          <div style={date}>Lunes 13 de abril, 2026</div>
-          <div style={breadcrumb}>Inicio &gt; Reportes &gt; Reporte clinico</div>
-        </div>
+          <div className="report-top-actions">
+            <span className="admin-pill">ADMINISTRADOR</span>
+            <button type="button" aria-label="Notificaciones">
+              <BellIcon />
+              <small>2</small>
+            </button>
+            <button type="button" aria-label="Calendario">
+              <CalendarIcon />
+            </button>
+            <button type="button" aria-label="Menu">
+              <MenuIcon />
+            </button>
+          </div>
+        </header>
 
-        <div style={content}>
-          <div style={wrapperContent}>{children}</div>
-        </div>
-      </div>
+        <section className="report-content">{children}</section>
+      </main>
     </div>
   );
 };
 
-const wrapper: CSSProperties = {
-  display: "flex",
-  height: "100vh",
-  width: "100%",
-};
+const BellIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9" />
+    <path d="M10 21a2 2 0 0 0 4 0" />
+  </svg>
+);
 
-const main: CSSProperties = {
-  flex: 1,
-  display: "flex",
-  flexDirection: "column",
-};
+const CalendarIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M5 5h14v15H5z" />
+    <path d="M8 3v4M16 3v4M5 10h14" />
+  </svg>
+);
 
-const header: CSSProperties = {
-  background: "#fff",
-  padding: "25px 40px",
-  borderBottom: "1px solid #E5E7EB",
-};
-
-const headerTop: CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-};
-
-const title: CSSProperties = {
-  margin: 0,
-  fontSize: "22px",
-  fontWeight: 600,
-  letterSpacing: "0.5px",
-};
-
-const icons: CSSProperties = {
-  display: "flex",
-  gap: "16px",
-  fontSize: "18px",
-};
-
-const date: CSSProperties = {
-  fontSize: "13px",
-  color: "#6B7280",
-  marginTop: "6px",
-};
-
-const breadcrumb: CSSProperties = {
-  fontSize: "13px",
-  color: "#6B7280",
-  marginTop: "10px",
-  display: "flex",
-  gap: "6px",
-  alignItems: "center",
-};
-
-const content: CSSProperties = {
-  flex: 1,
-  padding: "30px",
-  background: "#EEF2F5",
-  display: "flex",
-  justifyContent: "center",
-};
-
-const wrapperContent: CSSProperties = {
-  width: "100%",
-  maxWidth: "1200px",
-};
+const MenuIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </svg>
+);
 
 export default MainLayout;

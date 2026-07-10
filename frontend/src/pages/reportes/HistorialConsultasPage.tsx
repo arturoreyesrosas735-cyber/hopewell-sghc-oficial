@@ -6,9 +6,10 @@ import {
 
 const HistorialConsultasPage = () => (
   <ReporteWorkspace
-    titulo="Historial de Consultas"
-    descripcion="Revisa las consultas medicas de un paciente con filtro opcional por fechas."
-    idLabel="ID del paciente"
+    titulo="Historial de consulta"
+    current="Historial de consulta"
+    kind="historial"
+    idLabel="Paciente"
     requiereId
     fechasOpcionales
     generar={({ id, fechas }) => getHistorialConsultas(Number(id), fechas)}

@@ -27,15 +27,28 @@ class ReporteController extends Controller
 
         $diagnosticos = $this->diagnosticosPorPaciente($paciente);
         $tratamientos = $this->tratamientosPorPaciente($paciente);
+        $expediente = $this->expedientePorPaciente($paciente);
+        $consultas = $this->consultaBase()
+            ->where('p.id_paciente', $paciente)
+            ->orderByDesc('ec.fecha_apertura')
+            ->get();
+        $recetas = $this->recetasPorPaciente($paciente);
 
         $data = [
             'paciente' => $pacienteRegistro,
+            'expediente' => $expediente,
+            'consultas' => $consultas,
             'diagnosticos' => $diagnosticos,
             'tratamientos' => $tratamientos,
+            'recetas' => $recetas,
+            'ultima_consulta' => $consultas->first(),
             'totales' => [
+                'consultas' => $consultas->count(),
                 'diagnosticos' => $diagnosticos->count(),
                 'tratamientos' => $tratamientos->count(),
+                'recetas' => $recetas->count(),
             ],
+            'generado_en' => now()->format('Y-m-d H:i:s'),
         ];
 
         $this->registrarAuditoria($request, 'tb_paciente', 'Generacion de resumen clinico para paciente ID ' . $paciente . '.');
@@ -79,7 +92,7 @@ class ReporteController extends Controller
 
     public function porMedico(Request $request, int $doctor): JsonResponse
     {
-        $doctorRegistro = Doctor::query()->whereKey($doctor)->first();
+        $doctorRegistro = $this->doctorDetalle($doctor);
 
         if (! $doctorRegistro) {
             return $this->apiResponse(false, null, 'El medico seleccionado no existe o se encuentra inactivo.', null, 404);
@@ -101,11 +114,13 @@ class ReporteController extends Controller
 
         $data = [
             'doctor' => $doctorRegistro,
+            'periodo' => $request->only(['fecha_inicio', 'fecha_fin']),
             'consultas' => $consultas,
             'estadisticas' => [
                 'total_consultas' => $consultas->count(),
                 'pacientes_atendidos' => $consultas->pluck('id_paciente')->unique()->count(),
             ],
+            'generado_en' => now()->format('Y-m-d H:i:s'),
         ];
 
         $this->registrarAuditoria($request, 'tb_doctor', 'Generacion de reporte por medico ID ' . $doctor . '.');
@@ -115,10 +130,7 @@ class ReporteController extends Controller
 
     public function porSede(Request $request, int $sede): JsonResponse
     {
-        $sedeRegistro = Sede::query()
-            ->where('estatus_operativo', 'activo')
-            ->whereKey($sede)
-            ->first();
+        $sedeRegistro = $this->sedeDetalle($sede);
 
         if (! $sedeRegistro) {
             return $this->apiResponse(false, null, 'La sede seleccionada no existe o esta deshabilitada.', null, 404);
@@ -135,7 +147,9 @@ class ReporteController extends Controller
             'estadisticas' => [
                 'total_consultas' => $consultas->count(),
                 'consultorios_usados' => $consultas->pluck('id_consultorio')->unique()->count(),
+                'pacientes_atendidos' => $consultas->pluck('id_paciente')->unique()->count(),
             ],
+            'generado_en' => now()->format('Y-m-d H:i:s'),
         ];
 
         $this->registrarAuditoria($request, 'tb_sede', 'Generacion de reporte por sede ID ' . $sede . '.');
@@ -164,7 +178,13 @@ class ReporteController extends Controller
                 'total_consultas' => $consultas->count(),
                 'pacientes_atendidos' => $consultas->pluck('id_paciente')->unique()->count(),
                 'sedes' => $consultas->pluck('id_sede')->unique()->filter()->count(),
+                'medicos_activos' => $this->medicosActivosEnPeriodo($request),
+                'sede_principal' => $consultas->groupBy('nombre_sede')
+                    ->sortByDesc(fn ($items) => $items->count())
+                    ->keys()
+                    ->first(),
             ],
+            'generado_en' => now()->format('Y-m-d H:i:s'),
         ];
 
         $this->registrarAuditoria($request, 'tb_consulta_medica', 'Generacion de reporte por periodo.');
@@ -252,6 +272,93 @@ class ReporteController extends Controller
             ->first();
     }
 
+    private function expedientePorPaciente(int $paciente): ?object
+    {
+        return DB::table('tb_expediente_clinico')
+            ->where('fk_paciente_expediente_clinico', $paciente)
+            ->orderByDesc('fecha_apertura')
+            ->first();
+    }
+
+    private function recetasPorPaciente(int $paciente): Collection
+    {
+        return DB::table('tb_receta as r')
+            ->leftJoin('tb_tratamiento as t', 't.id_tratamiento', '=', 'r.fk_tratamiento_receta')
+            ->leftJoin('tb_doctor as d', 'd.pk_fk_usuario', '=', 'r.fk_doctor_receta')
+            ->where('r.fk_paciente_receta', $paciente)
+            ->where('r.estatus', 'activo')
+            ->select([
+                'r.id_receta',
+                'r.fecha_receta',
+                'r.dosis',
+                'r.frecuencia',
+                'r.duracion_receta',
+                'r.observaciones',
+                't.descripcion as tratamiento',
+                'd.uk_cedula_profesional',
+            ])
+            ->orderByDesc('r.fecha_receta')
+            ->get();
+    }
+
+    private function doctorDetalle(int $doctor): ?object
+    {
+        return DB::table('tb_doctor as d')
+            ->leftJoin('tb_usuario as u', 'u.id_usuario', '=', 'd.pk_fk_usuario')
+            ->leftJoin('tb_personal as p', 'p.id_personal', '=', 'u.fk_personal_usuario')
+            ->leftJoin('tb_especialidad_doctor as ed', 'ed.fk_doctor', '=', 'd.pk_fk_usuario')
+            ->leftJoin('tb_especialidad as e', 'e.id_especialidad', '=', 'ed.fk_especialidad')
+            ->where('d.pk_fk_usuario', $doctor)
+            ->select([
+                'd.pk_fk_usuario',
+                'd.uk_cedula_profesional',
+                'd.uk_rfc_personal',
+                DB::raw("TRIM(CONCAT(COALESCE(p.nombres, ''), ' ', COALESCE(p.apellido_paterno, ''), ' ', COALESCE(p.apellido_materno, ''))) as nombre_completo"),
+                DB::raw("COALESCE(MAX(e.uk_nombre), 'Especialidad no registrada') as especialidad"),
+            ])
+            ->groupBy([
+                'd.pk_fk_usuario',
+                'd.uk_cedula_profesional',
+                'd.uk_rfc_personal',
+                'p.nombres',
+                'p.apellido_paterno',
+                'p.apellido_materno',
+            ])
+            ->first();
+    }
+
+    private function sedeDetalle(int $sede): ?object
+    {
+        return DB::table('tb_sede as s')
+            ->leftJoin('tb_tipo_sede as ts', 'ts.id_tipo_sede', '=', 's.fk_tipo_sede')
+            ->where('s.estatus_operativo', 'activo')
+            ->where('s.id_sede', $sede)
+            ->select([
+                's.id_sede',
+                DB::raw("CONCAT('Hospital Hopewell ', s.nombre_sede) as hospital"),
+                's.nombre_sede',
+                's.responsable',
+                's.telefono',
+                's.uk_correo',
+                's.estatus_operativo',
+                'ts.uk_nombre_tipo_sede as tipo_sede',
+                DB::raw("CONCAT('Direccion asociada al asentamiento #', s.fk_asentamiento_sede) as direccion"),
+            ])
+            ->first();
+    }
+
+    private function medicosActivosEnPeriodo(Request $request): int
+    {
+        return DB::table('tb_doctor_consultorio as dc')
+            ->join('tb_consultorio as co', 'co.id_consultorio', '=', 'dc.fk_consultorio')
+            ->join('tb_consulta_medica as cm', 'cm.fk_consultorio_consulta_medica', '=', 'co.id_consultorio')
+            ->join('tb_expediente_clinico as ec', 'ec.id_expediente', '=', 'cm.fk_expediente_consulta_medica')
+            ->whereDate('ec.fecha_apertura', '>=', $request->query('fecha_inicio'))
+            ->whereDate('ec.fecha_apertura', '<=', $request->query('fecha_fin'))
+            ->distinct('dc.fk_doctor')
+            ->count('dc.fk_doctor');
+    }
+
     private function diagnosticosPorPaciente(int $paciente): Collection
     {
         return DB::table('tb_diagnostico as d')
@@ -329,9 +436,9 @@ class ReporteController extends Controller
         $formato = $request->query('formato');
 
         if ($formato === 'excel') {
-            return response($this->jsonPlanoACsv($payload['data']), 200, [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="' . $nombre . '.csv"',
+            return response($this->jsonPlanoAExcelHtml($payload['data']), 200, [
+                'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $nombre . '.xls"',
             ]);
         }
 
@@ -349,6 +456,22 @@ class ReporteController extends Controller
         return collect($rows)
             ->map(fn ($row) => implode(',', array_map(fn ($value) => '"' . str_replace('"', '""', (string) $value) . '"', $row)))
             ->implode("\n");
+    }
+
+    private function jsonPlanoAExcelHtml(array $data): string
+    {
+        $rows = [['seccion', 'campo', 'valor']];
+        $this->aplanarCsv($data, '', $rows);
+
+        $body = collect($rows)
+            ->map(function ($row): string {
+                return '<tr>' . collect($row)
+                    ->map(fn ($value): string => '<td>' . e((string) $value) . '</td>')
+                    ->implode('') . '</tr>';
+            })
+            ->implode('');
+
+        return '<!doctype html><html><head><meta charset="utf-8"></head><body><table>' . $body . '</table></body></html>';
     }
 
     private function aplanarCsv(mixed $value, string $path, array &$rows): void

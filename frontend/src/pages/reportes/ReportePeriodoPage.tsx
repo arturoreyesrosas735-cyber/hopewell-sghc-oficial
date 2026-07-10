@@ -7,8 +7,11 @@ import type { RangoFechas } from "../../types/reportes.types";
 
 const ReportePeriodoPage = () => (
   <ReporteWorkspace
-    titulo="Reporte por Periodo"
-    descripcion="Filtra la actividad clinica registrada entre dos fechas validas."
+    titulo="Reporte por periodo"
+    current="Reporte por periodo"
+    kind="periodo"
+    idLabel="Sede"
+    requiereId
     requiereFechas
     generar={({ fechas }) => getReportePorPeriodo(fechas as RangoFechas)}
     exportar={({ fechas }, formato) =>

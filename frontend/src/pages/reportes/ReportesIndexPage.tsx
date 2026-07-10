@@ -1,335 +1,147 @@
+import { Link } from "react-router-dom";
 import MainLayout from "../../components/layout/MainLayout";
-import { useNavigate } from "react-router-dom";
+
+const pacientes = [
+  ["Andres Fabian Ramirez", "33 anos", "M", "Fiebre viral demo"],
+  ["Arely Rivera Guillen", "27 anos", "F", "Control de migrana"],
+  ["Sofia Hernandez Luna", "39 anos", "F", "Rinitis alergica"],
+  ["Miguel Torres Salinas", "46 anos", "M", "Dolor lumbar"],
+  ["Valeria Mendoza Cruz", "25 anos", "F", "Gastritis leve"],
+  ["Daniel Ortega Santos", "31 anos", "M", "Faringitis aguda"],
+];
+
+const historial = [
+  ["Baja de usuario", "14-04-26", "Administrador", "El usuario fue dado de baja"],
+  ["Edicion de reporte", "13-04-26", "Administrador", "Reporte clinico actualizado"],
+  ["Nuevo reporte", "12-04-26", "Administrador", "Nuevo reporte clinico creado"],
+  ["Eliminacion de reporte", "11-04-26", "Administrador", "Reporte clinico eliminado"],
+];
+
+const accesos = [
+  {
+    path: "/reportes/por-medico",
+    title: "Reporte por medico",
+    text: "Generar reporte filtrado por medico",
+    tone: "green",
+    icon: "M",
+  },
+  {
+    path: "/reportes/por-sede",
+    title: "Reporte por sede",
+    text: "Generar reporte filtrado por sede",
+    tone: "blue",
+    icon: "S",
+  },
+  {
+    path: "/reportes/por-periodo",
+    title: "Reporte por periodo",
+    text: "Generar reporte filtrado por periodo",
+    tone: "violet",
+    icon: "P",
+  },
+];
 
 const ReportesIndexPage = () => {
-  const navigate = useNavigate();
-
   return (
-    <MainLayout>
-      <div style={container}>
-        {/* HEADER */}
-        <div style={header}>
-          <div>
-            <h1 style={pageTitle}>📊 Reportes Clínicos</h1>
-            <p style={pageSubtitle}>
-              Gestión, visualización y exportación de reportes médicos
-            </p>
-          </div>
-
-          <div style={badge}>
-            M12
-          </div>
-        </div>
-
-        {/* CONTENIDO PRINCIPAL */}
-        <div style={grid}>
-          {/* MODULO REPORTES */}
-          <div style={card}>
-            <h2 style={title}>Generar Reportes</h2>
-
-            <p style={subtitle}>
-              Selecciona el reporte que deseas consultar.
-            </p>
-
-            <div style={menuContainer}>
-              <button
-                style={btnPrimary}
-                onClick={() =>
-                  navigate("/reportes/resumen-clinico")
-                }
-              >
-                📄 Resumen Clínico
-              </button>
-
-              <button
-                style={btnPrimary}
-                onClick={() =>
-                  navigate("/reportes/historial-consultas")
-                }
-              >
-                📑 Historial de Consultas
-              </button>
-
-              <button
-                style={btnPrimary}
-                onClick={() =>
-                  navigate("/reportes/por-medico")
-                }
-              >
-                👨‍⚕️ Reporte por Médico
-              </button>
-
-              <button
-                style={btnPrimary}
-                onClick={() =>
-                  navigate("/reportes/por-sede")
-                }
-              >
-                🏥 Reporte por Sede
-              </button>
-
-              <button
-                style={btnPrimary}
-                onClick={() =>
-                  navigate("/reportes/por-periodo")
-                }
-              >
-                📅 Reporte por Período
-              </button>
+    <MainLayout title="REPORTES" current="Reporte clinico">
+      <section className="report-dashboard">
+        <div className="dashboard-main-card">
+          <div className="dashboard-card-title">
+            <span className="card-icon green">R</span>
+            <div>
+              <h2>Generar reporte clinico</h2>
+              <strong>Pacientes</strong>
             </div>
           </div>
 
-          {/* VISUALIZACION */}
-          <div style={card}>
-            <h2 style={title}>
-              Visualización de Reportes
-            </h2>
+          <div className="report-search">Buscar paciente...</div>
 
-            <div style={chart}>
-              <div style={chartCenter}>
-                <span style={chartCenterTitle}>
-                  SGHC
-                </span>
-
-                <span style={chartCenterText}>
-                  M12
-                </span>
+          <div className="patient-list">
+            {pacientes.map((paciente, index) => (
+              <div key={paciente[0]} className="patient-row">
+                <span className={index === 0 ? "radio-dot active" : "radio-dot"} />
+                <span className="mini-avatar">{paciente[0].charAt(0)}</span>
+                <strong>{paciente[0]}</strong>
+                <span>{paciente[1]}</span>
+                <span>{paciente[2]}</span>
+                <span>{paciente[3]}</span>
+                <Link to="/reportes/resumen-clinico">Ver / Editar</Link>
               </div>
+            ))}
+          </div>
+
+          <Link className="generate-report-button" to="/reportes/resumen-clinico">
+            Generar reporte clinico
+          </Link>
+        </div>
+
+        <div className="dashboard-visual-card">
+          <h2>Visualizacion de reportes</h2>
+          <div className="donut-area">
+            <div className="donut-chart">
+              <strong>256</strong>
+              <span>Reportes</span>
             </div>
+            <ul>
+              <li><span className="dot green-dot" />Consultas medicas <strong>40%</strong></li>
+              <li><span className="dot blue-dot" />Toma de signos <strong>25%</strong></li>
+              <li><span className="dot violet-dot" />Laboratorios <strong>20%</strong></li>
+              <li><span className="dot orange-dot" />Hospitalizacion <strong>10%</strong></li>
+              <li><span className="dot gray-dot" />Otros <strong>5%</strong></li>
+            </ul>
+          </div>
 
-            <p style={chartText}>
-              Sistema de Gestión de Historial Clínico
-            </p>
-
-            <div style={actions}>
-              <button style={actionBtn}>
-                👁 Visualizar
-              </button>
-
-              <button style={actionBtn}>
-                📥 Exportar
-              </button>
-
-              <button style={actionBtn}>
-                🖨 Imprimir
-              </button>
-            </div>
+          <div className="visual-actions">
+            <Link to="/reportes/resumen-clinico">Visualizar</Link>
+            <Link to="/reportes/por-periodo">Exportar</Link>
+            <button type="button">Imprimir</button>
           </div>
         </div>
 
-        {/* KPIs */}
-        <div style={statsGrid}>
-          <div style={statCard}>
-            <div style={statIcon}>👨</div>
+        <div className="dashboard-history-card">
+          <h2>Historial de consulta</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Accion</th>
+                <th>Fecha</th>
+                <th>Usuario</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historial.map((row) => (
+                <tr key={row[0]}>
+                  {row.map((cell) => (
+                    <td key={cell}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <Link to="/reportes/historial-consultas" className="history-more">
+            Ver mas historial
+          </Link>
+        </div>
 
-            <h2 style={statNumber}>256</h2>
-
-            <p style={statText}>Pacientes</p>
-          </div>
-
-          <div style={statCard}>
-            <div style={statIcon}>🩺</div>
-
-            <h2 style={statNumber}>112</h2>
-
-            <p style={statText}>Consultas</p>
-          </div>
-
-          <div style={statCard}>
-            <div style={statIcon}>👨‍⚕️</div>
-
-            <h2 style={statNumber}>37</h2>
-
-            <p style={statText}>Médicos</p>
-          </div>
-
-          <div style={statCard}>
-            <div style={statIcon}>📄</div>
-
-            <h2 style={statNumber}>5</h2>
-
-            <p style={statText}>Tipos de Reporte</p>
+        <div className="dashboard-quick-card">
+          <h2>Reportes rapidos</h2>
+          <div className="quick-list">
+            {accesos.map((acceso) => (
+              <Link key={acceso.path} to={acceso.path} className="quick-report">
+                <span className={`card-icon ${acceso.tone}`}>{acceso.icon}</span>
+                <div>
+                  <strong>{acceso.title}</strong>
+                  <small>{acceso.text}</small>
+                </div>
+                <span>›</span>
+              </Link>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
     </MainLayout>
   );
-};
-
-/* =========================== */
-/* ESTILOS */
-/* =========================== */
-
-const container = {
-  padding: "24px",
-  background: "#F5F7FA",
-  minHeight: "100vh",
-};
-
-const header = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "30px",
-};
-
-const pageTitle = {
-  fontSize: "36px",
-  fontWeight: 700,
-  color: "#1E293B",
-  marginBottom: "5px",
-};
-
-const pageSubtitle = {
-  color: "#64748B",
-  fontSize: "15px",
-};
-
-const badge = {
-  background:
-    "linear-gradient(135deg,#6FBF73,#4CAF50)",
-  color: "#fff",
-  padding: "10px 22px",
-  borderRadius: "30px",
-  fontWeight: 700,
-  fontSize: "18px",
-};
-
-const grid = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1.8fr",
-  gap: "24px",
-};
-
-const card = {
-  background: "#FFFFFF",
-  borderRadius: "24px",
-  padding: "32px",
-  border: "1px solid #E5E7EB",
-  boxShadow: "0 10px 30px rgba(0,0,0,0.06)",
-};
-
-const title = {
-  fontSize: "28px",
-  fontWeight: 700,
-  marginBottom: "10px",
-};
-
-const subtitle = {
-  color: "#6FBF73",
-  marginBottom: "24px",
-  fontSize: "15px",
-};
-
-const menuContainer = {
-  display: "flex",
-  flexDirection: "column" as const,
-  gap: "14px",
-};
-
-const btnPrimary = {
-  background:
-    "linear-gradient(135deg,#6FBF73,#4CAF50)",
-  color: "#fff",
-  border: "none",
-  borderRadius: "18px",
-  padding: "18px",
-  fontWeight: 600,
-  fontSize: "16px",
-  cursor: "pointer",
-  boxShadow:
-    "0 8px 20px rgba(111,191,115,.25)",
-};
-
-const chart = {
-  width: "280px",
-  height: "280px",
-  borderRadius: "50%",
-  background:
-    "conic-gradient(#6FBF73 0 75%, #D9F0DB 75% 100%)",
-  margin: "20px auto",
-  position: "relative" as const,
-  boxShadow:
-    "0 15px 35px rgba(111,191,115,.25)",
-};
-
-const chartCenter = {
-  position: "absolute" as const,
-  width: "130px",
-  height: "130px",
-  background: "#fff",
-  borderRadius: "50%",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  flexDirection: "column" as const,
-};
-
-const chartCenterTitle = {
-  fontWeight: 700,
-  fontSize: "22px",
-};
-
-const chartCenterText = {
-  color: "#6FBF73",
-  fontWeight: 700,
-  fontSize: "18px",
-};
-
-const chartText = {
-  textAlign: "center" as const,
-  fontSize: "18px",
-  fontWeight: 500,
-  color: "#334155",
-};
-
-const actions = {
-  display: "flex",
-  gap: "14px",
-  marginTop: "24px",
-};
-
-const actionBtn = {
-  flex: 1,
-  padding: "16px",
-  borderRadius: "16px",
-  border: "1px solid #E2E8F0",
-  background: "#fff",
-  cursor: "pointer",
-  fontWeight: 600,
-  fontSize: "15px",
-};
-
-const statsGrid = {
-  display: "grid",
-  gridTemplateColumns: "repeat(4, 1fr)",
-  gap: "20px",
-  marginTop: "30px",
-};
-
-const statCard = {
-  background: "#FFFFFF",
-  borderRadius: "24px",
-  padding: "24px",
-  textAlign: "center" as const,
-  boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
-};
-
-const statIcon = {
-  fontSize: "36px",
-};
-
-const statNumber = {
-  margin: "12px 0 5px 0",
-  fontSize: "32px",
-  color: "#16A34A",
-};
-
-const statText = {
-  color: "#64748B",
 };
 
 export default ReportesIndexPage;

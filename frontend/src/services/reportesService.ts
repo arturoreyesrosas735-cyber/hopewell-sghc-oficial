@@ -19,7 +19,7 @@ const descargarBlob = (blob: Blob, nombre: string) => {
 };
 
 const extensionPorFormato = (formato: FormatoExportacion) =>
-  formato === "excel" ? "csv" : "pdf";
+  formato === "excel" ? "xls" : "pdf";
 
 export const getResumenClinico = async (idPaciente: number) => {
   const response = await api.get<ApiResponse<ResumenClinicoReporte>>(

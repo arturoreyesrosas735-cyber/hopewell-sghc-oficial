@@ -6,10 +6,12 @@ import {
 
 const ReporteSedePage = () => (
   <ReporteWorkspace
-    titulo="Reporte por Sede"
-    descripcion="Consulta la atencion registrada por sede activa."
-    idLabel="ID de la sede"
+    titulo="Reporte por sede"
+    current="Reporte por sede"
+    kind="sede"
+    idLabel="Sede"
     requiereId
+    fechasOpcionales
     generar={({ id }) => getReportePorSede(Number(id))}
     exportar={({ id }, formato) => exportarReportePorSede(Number(id), formato)}
   />
