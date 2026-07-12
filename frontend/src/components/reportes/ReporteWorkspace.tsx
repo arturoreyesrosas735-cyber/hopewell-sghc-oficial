@@ -337,6 +337,7 @@ const ReporteWorkspace = ({
             <small>Reporte generado correctamente</small>
           </div>
           <h2>{kind === "periodo" ? "Resumen general" : kind === "historial" ? "Historial" : titulo}</h2>
+          <ReporteVisualPreview kind={kind} rows={rows} />
           <table className="report-reference-table">
             <thead>
               <tr>
@@ -370,6 +371,64 @@ const ReporteWorkspace = ({
         </div>
       </section>
     </MainLayout>
+  );
+};
+
+const ReporteVisualPreview = ({ kind, rows }: { kind: ReporteKind; rows: string[][] }) => {
+  if (kind === "historial") return null;
+
+  const metrics = metricasReporte(kind, rows);
+  const chart = datosGraficaReporte(kind, rows);
+  const maxValue = Math.max(...chart.items.map((item) => item.value), 1);
+
+  return (
+    <div className="report-preview-panel">
+      <div className="preview-metric-grid">
+        {metrics.map((metric) => (
+          <section key={metric.label} className="preview-metric-card">
+            <span>{metric.label}</span>
+            <strong>{metric.value}</strong>
+          </section>
+        ))}
+      </div>
+
+      <div className="preview-chart-grid">
+        <section className="preview-chart-card">
+          <div>
+            <h3>{chart.title}</h3>
+            <p>{chart.subtitle}</p>
+          </div>
+
+          {chart.items.length > 0 ? (
+            <div className="preview-bars">
+              {chart.items.map((item) => (
+                <div key={item.label} className="preview-bar-row">
+                  <span>{item.label}</span>
+                  <div className="preview-bar-track">
+                    <div style={{ width: `${Math.max((item.value / maxValue) * 100, 8)}%` }} />
+                  </div>
+                  <strong>{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-preview">Sin registros para graficar.</div>
+          )}
+        </section>
+
+        <section className="preview-chart-card compact">
+          <h3>{chart.detailTitle}</h3>
+          <div className="preview-detail-list">
+            {chart.details.map((item) => (
+              <div key={item.label}>
+                <span>{item.label}</span>
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
   );
 };
 
@@ -737,6 +796,88 @@ const metricasReporte = (kind: ReporteKind, rows: string[][]) => {
     { label: "Estado", value: "Generado" },
   ];
 };
+
+const datosGraficaReporte = (kind: ReporteKind, rows: string[][]) => {
+  if (kind === "medico") {
+    const porFecha = contarPorColumna(rows, 4);
+    const porSede = contarPorColumna(rows, 7);
+    const horarios = rows.map((row) => row[5]).filter(Boolean);
+
+    return {
+      title: "Consultas por fecha",
+      subtitle: "Atenciones realizadas por el doctor dentro del periodo seleccionado.",
+      detailTitle: "Sedes y horarios",
+      items: porFecha,
+      details: [
+        ...porSede.slice(0, 4),
+        { label: "Primera hora", value: horarios[0] ?? "Sin datos" },
+        { label: "Ultima hora", value: horarios[horarios.length - 1] ?? "Sin datos" },
+      ],
+    };
+  }
+
+  if (kind === "sede") {
+    return {
+      title: "Consultas por corte",
+      subtitle: "Actividad de la sede distribuida por fechas del periodo.",
+      detailTitle: "Capacidad operativa",
+      items: rows.map((row) => ({ label: row[6] ?? "Sin fecha", value: Number(row[7] ?? 0) })),
+      details: [
+        { label: "Hospital", value: rows[0]?.[0] ?? "Sin datos" },
+        { label: "Sede", value: rows[0]?.[1] ?? "Sin datos" },
+        { label: "Consultorios", value: rows[0]?.[8] ?? "0" },
+        { label: "Responsable", value: rows[0]?.[3] ?? "Sin datos" },
+      ],
+    };
+  }
+
+  if (kind === "periodo") {
+    const row = rows[0] ?? [];
+
+    return {
+      title: "Resumen del periodo",
+      subtitle: "Indicadores principales conectados con medico, sede y pacientes.",
+      detailTitle: "Comparativo",
+      items: [
+        { label: "Medicos", value: Number(row[1] ?? 0) },
+        { label: "Pacientes", value: Number(row[2] ?? 0) },
+        { label: "Consultas", value: Number(row[3] ?? 0) },
+        { label: "Sedes", value: Number(row[4] ?? 0) },
+      ],
+      details: rows.slice(0, 3).map((item) => ({ label: item[0] ?? "Periodo", value: item[3] ?? "0" })),
+    };
+  }
+
+  const row = rows[0] ?? [];
+
+  return {
+    title: "Resumen clinico",
+    subtitle: "Vista previa del expediente antes de imprimir o exportar.",
+    detailTitle: "Datos clave",
+    items: [
+      { label: "Diagnostico", value: row[4] ? 1 : 0 },
+      { label: "Tratamiento", value: row[5] ? 1 : 0 },
+      { label: "Alergias", value: row[6] && row[6] !== "Sin alergias registradas" ? 1 : 0 },
+      { label: "Consulta", value: row[7] ? 1 : 0 },
+    ],
+    details: [
+      { label: "Paciente", value: row[0] ?? "Sin datos" },
+      { label: "Expediente", value: row[2] ?? "Sin datos" },
+      { label: "Diagnostico", value: row[4] ?? "Sin datos" },
+      { label: "Ultima consulta", value: row[7] ?? "Sin datos" },
+    ],
+  };
+};
+
+const contarPorColumna = (rows: string[][], columnIndex: number) =>
+  Object.entries(
+    rows.reduce<Record<string, number>>((accumulator, row) => {
+      const label = row[columnIndex] || "Sin dato";
+      accumulator[label] = (accumulator[label] ?? 0) + 1;
+
+      return accumulator;
+    }, {}),
+  ).map(([label, value]) => ({ label, value }));
 
 const escapeHtml = (value: string) =>
   String(value)
