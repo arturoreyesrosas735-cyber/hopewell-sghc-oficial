@@ -1,0 +1,13 @@
+backend/.env
+backend/vendor/
+backend/storage/
+backend/database/database.sqlite
+
+frontend/node_modules/
+frontend/dist/
+frontend/.npm-cache/
+frontend/_repair_*/
+frontend/*.log
+frontend/*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts

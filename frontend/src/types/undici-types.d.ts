@@ -1,0 +1,34 @@
+declare module 'undici-types' {
+  export type Dispatcher = unknown;
+  export type GlobalDispatcher = unknown;
+  export type Agent = unknown;
+  export type MockAgent = unknown;
+  export type MockClient = unknown;
+  export type MockPool = unknown;
+  export type Pool = unknown;
+  export type ProxyAgent = unknown;
+  export type EnvHttpProxyAgent = unknown;
+  export type RetryAgent = unknown;
+  export type RetryHandler = unknown;
+  export type BalancedPool = unknown;
+  export type Client = unknown;
+  export type Connector = unknown;
+  export type errors = unknown;
+  export type request = unknown;
+  export type stream = unknown;
+  export type pipeline = unknown;
+  export type connect = unknown;
+  export type upgrade = unknown;
+  export type setGlobalDispatcher = unknown;
+  export type getGlobalDispatcher = unknown;
+  export type fetch = unknown;
+  export type Headers = unknown;
+  export type Response = unknown;
+  export type Request = unknown;
+  export type FormData = unknown;
+  export type File = unknown;
+  export type FileReader = unknown;
+  export type caches = unknown;
+  export type WebSocket = unknown;
+  export type EventSource = unknown;
+}
