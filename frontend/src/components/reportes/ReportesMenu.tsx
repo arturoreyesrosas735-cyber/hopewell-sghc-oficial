@@ -1,12 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
-import logo from "../../assets/logo.svg";
+import logo from "../../assets/icons/logo.png";
 
 const menuItems = [
+  { icon: "home", label: "Inicio", path: "/inicio" },
   { icon: "users", label: "Usuarios y acceso", path: "/usuarios" },
   { icon: "doctor", label: "Doctores", path: "/doctores" },
   { icon: "building", label: "Hospitales y clinicas", path: "/hospitales" },
   { icon: "stethoscope", label: "Consultorios", path: "/consultorios" },
+  { icon: "treatment", label: "Tratamientos y recetas", path: "/tratamientos-recetas" },
   { icon: "chart", label: "Reportes", path: "/reportes" },
   { icon: "audit", label: "Auditorias", path: "/auditoria" },
 ];
@@ -16,13 +18,13 @@ const ReportesMenu = () => {
 
   return (
     <aside className="report-sidebar">
-      <Link className="report-brand" to="/reportes" aria-label="Hopewell reportes">
+      <Link className="report-brand" to="/inicio" aria-label="Hopewell inicio">
         <img src={logo} alt="Hopewell Historiales Clinicos" />
       </Link>
 
       <nav className="report-nav" aria-label="Menu principal">
         {menuItems.map((item) => {
-          const isActive = location.pathname.startsWith(item.path);
+          const isActive = isActiveMenuItem(item.path, location.pathname);
 
           return (
             <Link
@@ -51,6 +53,27 @@ const ReportesMenu = () => {
   );
 };
 
+const treatmentRoutes = [
+  "/tratamientos-recetas",
+  "/tratamientos",
+  "/recetas",
+  "/pacientes",
+  "/expedientes",
+  "/consultas",
+  "/diagnosticos",
+  "/padecimientos",
+  "/medicamentos",
+  "/enfermedades",
+];
+
+const isActiveMenuItem = (itemPath: string, currentPath: string) => {
+  if (itemPath === "/tratamientos-recetas") {
+    return treatmentRoutes.some((path) => currentPath === path || currentPath.startsWith(path + "/"));
+  }
+
+  return currentPath === itemPath || currentPath.startsWith(itemPath + "/");
+};
+
 const Icon = ({ name }: { name: string }) => {
   const paths: Record<string, ReactNode> = {
     users: (
@@ -59,6 +82,13 @@ const Icon = ({ name }: { name: string }) => {
         <circle cx="17" cy="9" r="2.5" />
         <path d="M3.5 20c.8-3.6 2.7-5.4 5.5-5.4s4.7 1.8 5.5 5.4" />
         <path d="M13.8 15.2c2.6.2 4.2 1.8 4.7 4.8" />
+      </>
+    ),
+    home: (
+      <>
+        <path d="M4 11.5 12 4l8 7.5" />
+        <path d="M6.5 10.5V20h11v-9.5" />
+        <path d="M10 20v-5h4v5" />
       </>
     ),
     doctor: (
@@ -81,6 +111,13 @@ const Icon = ({ name }: { name: string }) => {
         <path d="M6 4v5a4 4 0 0 0 8 0V4" />
         <path d="M14 9v5a4 4 0 0 0 8 0v-1" />
         <circle cx="22" cy="11" r="1.6" />
+      </>
+    ),
+    treatment: (
+      <>
+        <path d="M7 4h10v16H7z" />
+        <path d="M10 8h4M12 6v4" />
+        <path d="M10 14h4M10 17h4" />
       </>
     ),
     chart: (

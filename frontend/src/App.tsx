@@ -14,6 +14,7 @@ import ReportePeriodoPage from './pages/reportes/ReportePeriodoPage';
 import ReporteSedePage from './pages/reportes/ReporteSedePage';
 import ReportesIndexPage from './pages/reportes/ReportesIndexPage';
 import ResumenClinicoPage from './pages/reportes/ResumenClinicoPage';
+import HomePage from './pages/HomePage';
 import TratamientoDetailPage from './pages/TratamientosRecetas/TratamientoDetailPage';
 import TratamientoFormPage from './pages/TratamientosRecetas/TratamientoFormPage';
 import TratamientoListPage from './pages/TratamientosRecetas/TratamientoListPage';
@@ -22,7 +23,8 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/tratamientos-recetas" replace />} />
+        <Route path="/" element={<Navigate to="/inicio" replace />} />
+        <Route path="/inicio" element={<HomePage />} />
         <Route path="/doctores" element={<DoctoresList />} />
         <Route path="/doctores/nuevo" element={<DoctorForm />} />
         <Route path="/doctores/:id" element={<DoctorDetalle />} />

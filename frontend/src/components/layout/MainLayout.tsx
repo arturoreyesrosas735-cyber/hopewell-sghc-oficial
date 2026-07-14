@@ -56,17 +56,17 @@ const MainLayout = ({
   );
 };
 
-const BellIcon = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9" />
-    <path d="M10 21a2 2 0 0 0 4 0" />
-  </svg>
-);
-
 const CalendarIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M5 5h14v15H5z" />
     <path d="M8 3v4M16 3v4M5 10h14" />
+  </svg>
+);
+
+const BellIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9" />
+    <path d="M10 21a2 2 0 0 0 4 0" />
   </svg>
 );
 
