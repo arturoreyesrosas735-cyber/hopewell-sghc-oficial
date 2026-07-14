@@ -11,13 +11,43 @@ use Illuminate\Validation\ValidationException;
 
 class DiagnosticoController extends Controller
 {
+    public function padecimientos(): JsonResponse
+    {
+        try {
+            $padecimientos = DB::table('tb_padecimiento')
+                ->select([
+                    'id_padecimiento',
+                    'uk_nombre_padecimiento',
+                    'uk_codigo_cie',
+                    'vv_descripcion',
+                ])
+                ->orderBy('uk_nombre_padecimiento')
+                ->get();
+
+            return response()->json(['data' => $padecimientos]);
+        } catch (QueryException) {
+            return response()->json([
+                'data' => [
+                    [
+                        'id_padecimiento' => 0,
+                        'uk_nombre_padecimiento' => 'Cefalea ocasional',
+                        'uk_codigo_cie' => 'R51',
+                        'vv_descripcion' => 'Dolor de cabeza ocasional',
+                    ],
+                ],
+            ]);
+        }
+    }
+
     public function resumen(): JsonResponse
     {
+        $search = trim((string) request()->query('search', ''));
+
         try {
             $diagnosticos = DB::table('tb_diagnostico as d')
                 ->leftJoin('tb_consulta_medica as c', 'c.id_consulta_medica', '=', 'd.fk_consulta_medica_diagnostico')
-                ->leftJoin('tb_expediente_clinico as e', 'e.id_expediente_clinico', '=', 'c.fk_expediente_clinico_consulta')
-                ->leftJoin('tb_paciente as p', 'p.id_paciente', '=', 'e.fk_paciente_expediente')
+                ->leftJoin('tb_expediente_clinico as e', 'e.id_expediente', '=', 'c.fk_expediente_consulta_medica')
+                ->leftJoin('tb_paciente as p', 'p.id_paciente', '=', 'e.fk_paciente_expediente_clinico')
                 ->select(
                     'd.id_diagnostico',
                     'd.fk_consulta_medica_diagnostico',
@@ -25,9 +55,24 @@ class DiagnosticoController extends Controller
                     'd.descripcion_diagnostico',
                     'd.observaciones',
                     'd.fecha_crecion',
-                    'p.nombre as paciente_nombre',
-                    'p.apellido_paterno as paciente_apellido'
+                    'p.nombres as paciente_nombre',
+                    'p.apellido_paterno as paciente_apellido',
+                    'p.uk_curp as paciente_curp',
+                    'e.id_expediente'
                 )
+                ->when($search !== '', function ($query) use ($search): void {
+                    $query->where(function ($inner) use ($search): void {
+                        $inner
+                            ->where('p.nombres', 'like', "%{$search}%")
+                            ->orWhere('p.apellido_paterno', 'like', "%{$search}%")
+                            ->orWhere('p.apellido_materno', 'like', "%{$search}%")
+                            ->orWhere('p.uk_curp', 'like', "%{$search}%");
+
+                        if (is_numeric($search)) {
+                            $inner->orWhere('p.id_paciente', (int) $search);
+                        }
+                    });
+                })
                 ->orderByDesc('d.fecha_crecion')
                 ->limit(20)
                 ->get();
@@ -63,8 +108,8 @@ class DiagnosticoController extends Controller
         try {
             $diagnosticos = DB::table('tb_diagnostico as d')
                 ->join('tb_consulta_medica as c', 'c.id_consulta_medica', '=', 'd.fk_consulta_medica_diagnostico')
-                ->where('c.fk_expediente_clinico_consulta', $expediente)
-                ->select('d.*', 'c.fecha_consulta')
+                ->where('c.fk_expediente_consulta_medica', $expediente)
+                ->select('d.*', 'c.horario')
                 ->orderByDesc('d.fecha_crecion')
                 ->get();
 
@@ -119,6 +164,35 @@ class DiagnosticoController extends Controller
         }
     }
 
+    public function storeByExpediente(Request $request, int $expediente): JsonResponse
+    {
+        try {
+            $payload = $this->validatePayload($request);
+            $consulta = $this->findOrCreateConsultaForExpediente($expediente);
+
+            if (! $consulta) {
+                return response()->json(['message' => 'Expediente no encontrado.'], 404);
+            }
+
+            $id = DB::table('tb_diagnostico')->insertGetId([
+                'fk_consulta_medica_diagnostico' => $consulta,
+                'nombre_diagnostico' => $payload['nombre_diagnostico'],
+                'descripcion_diagnostico' => $payload['descripcion_diagnostico'],
+                'observaciones' => $payload['observaciones'] ?? null,
+                'fecha_crecion' => now(),
+            ], 'id_diagnostico');
+
+            return $this->show($id)->setStatusCode(201);
+        } catch (ValidationException $exception) {
+            return response()->json(['message' => 'Datos invalidos.', 'errors' => $exception->errors()], 422);
+        } catch (QueryException $exception) {
+            return response()->json([
+                'message' => 'No se pudo guardar el diagnostico en el expediente.',
+                'error' => config('app.debug') ? $exception->getMessage() : null,
+            ], 500);
+        }
+    }
+
     public function update(Request $request, int $id): JsonResponse
     {
         try {
@@ -152,12 +226,42 @@ class DiagnosticoController extends Controller
         $rule = $required ? 'required' : 'sometimes';
 
         $validator = Validator::make($request->all(), [
-            'nombre_diagnostico' => [$rule, 'string', 'max:120'],
+            'nombre_diagnostico' => [$rule, 'string', 'max:150'],
             'descripcion_diagnostico' => [$rule, 'string', 'max:1000'],
             'observaciones' => ['nullable', 'string', 'max:1000'],
         ]);
 
         return $validator->validate();
+    }
+
+    private function findOrCreateConsultaForExpediente(int $expediente): ?int
+    {
+        $expedienteExists = DB::table('tb_expediente_clinico')
+            ->where('id_expediente', $expediente)
+            ->exists();
+
+        if (! $expedienteExists) {
+            return null;
+        }
+
+        $consulta = DB::table('tb_consulta_medica')
+            ->where('fk_expediente_consulta_medica', $expediente)
+            ->orderByDesc('id_consulta_medica')
+            ->value('id_consulta_medica');
+
+        if ($consulta) {
+            return (int) $consulta;
+        }
+
+        $consultorio = DB::table('tb_consultorio')->value('id_consultorio') ?? 1;
+
+        return (int) DB::table('tb_consulta_medica')->insertGetId([
+            'fk_consultorio_consulta_medica' => $consultorio,
+            'fk_expediente_consulta_medica' => $expediente,
+            'fk_tipo_consulta' => 1,
+            'horario' => now()->format('H:i:s'),
+            'motivo_consulta' => 'Consulta creada automaticamente para registro de diagnostico.',
+        ], 'id_consulta_medica');
     }
 
     private function demoResumen(): array

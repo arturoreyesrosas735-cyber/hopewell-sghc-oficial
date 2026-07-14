@@ -11,3 +11,4 @@ frontend/*.log
 frontend/*.tsbuildinfo
 frontend/vite.config.js
 frontend/vite.config.d.ts
+cum3-extract.tar
